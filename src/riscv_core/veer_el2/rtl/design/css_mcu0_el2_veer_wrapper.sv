@@ -35,9 +35,10 @@ import css_mcu0_el2_pkg::*;
    input logic [31:1]                      rst_vec,
    /*pragma coverage on*/
    input logic                             nmi_int,
-   // nmi_vec is supposed to be tied to constants in the top level
+   // jtag_id and nmi_vec are supposed to be tied to constants in the top level
    /*pragma coverage off*/
    input logic [31:1]                      nmi_vec,
+   input logic [31:1]                      jtag_id,
    /*pragma coverage on*/
 
 
@@ -294,7 +295,7 @@ import css_mcu0_el2_pkg::*;
    output logic                            dma_axi_rlast,
 `endif
 
-`ifdef css_mcu0_RV_BUILD_AHB_LITE
+`ifdef RV_BUILD_AHB_LITE
  //// AHB LITE BUS
    output logic [31:0]                     haddr,
    /* exclude signals that are tied to constant value in css_mcu0_axi4_to_ahb.sv */
@@ -602,7 +603,7 @@ import css_mcu0_el2_pkg::*;
 `endif //  `ifdef css_mcu0_RV_BUILD_AXI4
 
 
-`ifdef css_mcu0_RV_BUILD_AHB_LITE
+`ifdef RV_BUILD_AHB_LITE
    // Since all the signals in this block are tied to constant, we exclude this from coverage analysis
    /*pragma coverage off*/
    wire                            lsu_axi_awvalid;
@@ -896,6 +897,7 @@ import css_mcu0_el2_pkg::*;
     // Processor Signals
     .core_rst_n  (dbg_rst_l),       // Debug reset, active low
     .core_clk    (clk),             // Core clock
+    .jtag_id     (jtag_id),         // JTAG ID
     .rd_data     (dmi_rdata),       // Read data from  Processor
     .reg_wr_data (dmi_wdata),       // Write data to Processor
     .reg_wr_addr (dmi_addr),        // Write address to Processor

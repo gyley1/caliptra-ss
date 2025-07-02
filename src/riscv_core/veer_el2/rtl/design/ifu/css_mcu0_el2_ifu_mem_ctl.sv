@@ -1355,8 +1355,7 @@ end
 
 
 
-         assign iccm_dma_rd_ecc_single_err             = '0;
-         assign iccm_dma_rd_ecc_double_err             = '0;
+
          assign iccm_rd_ecc_single_err                 = 1'b0 ;
          assign iccm_rd_ecc_double_err                 = '0 ;
          assign iccm_rd_ecc_single_err_ff              = 1'b0 ;
