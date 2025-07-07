@@ -39,6 +39,7 @@ targets:
       - $COMPILE_ROOT/../../third_party/i3c-core/src/hci/dxt.sv
       - $COMPILE_ROOT/../../third_party/i3c-core/src/hci/tti.sv
       - $COMPILE_ROOT/../../third_party/i3c-core/src/hci/queues.sv
+      - $COMPILE_ROOT/../../third_party/i3c-core/src/hci/csri.sv
       - $COMPILE_ROOT/../../third_party/i3c-core/src/hci/hci.sv
       - $COMPILE_ROOT/../../third_party/i3c-core/src/ctrl/target_reset_detector.sv
       - $COMPILE_ROOT/../../third_party/i3c-core/src/ctrl/width_converter_8toN.sv
