@@ -24,6 +24,7 @@
 module css_mcu0_el2_veer_wrapper
 import css_mcu0_el2_pkg::*;
  #(
+  parameter MCU_IDCODE_VALUE = 32'h0000_0000,
 `include "css_mcu0_el2_param.vh"
 )
 (
@@ -885,7 +886,9 @@ import css_mcu0_el2_pkg::*;
 
 
    //  JTAG/DMI instance
-   css_mcu0_dmi_wrapper  dmi_wrapper (
+   css_mcu0_dmi_wrapper  #(
+    .MCU_IDCODE_VALUE(MCU_IDCODE_VALUE)
+   ) dmi_wrapper (
     // JTAG signals
     .trst_n      (jtag_trst_n),     // JTAG reset
     .tck         (jtag_tck),        // JTAG clock

@@ -86,7 +86,8 @@ module dmi_jtag_tap #(
 
     // capture IR register
     if (capture_ir) begin
-      jtag_ir_shift_d =  IrLength'(4'b0101);
+      //jtag_ir_shift_d =  IrLength'(4'b0101);
+      jtag_ir_shift_d =  IrLength'(4'b0001);
     end
 
     // update IR register

@@ -21,7 +21,9 @@
 //
 //-------------------------------------------------------------------------------------
 
-module css_mcu0_dmi_wrapper(
+module css_mcu0_dmi_wrapper #(
+    parameter MCU_IDCODE_VALUE=32'h0000_0000
+  ) (
 
   // JTAG signals
   input              trst_n,              // JTAG reset
@@ -53,7 +55,7 @@ module css_mcu0_dmi_wrapper(
 
  
   //jtag_tap instantiation
- css_mcu0_rvjtag_tap i_jtag_tap(
+ css_mcu0_rvjtag_tap #(.MCU_IDCODE_VALUE(MCU_IDCODE_VALUE) ) i_jtag_tap(
    .trst(trst_n),                      // dedicated JTAG TRST (active low) pad signal or asynchronous active low power on reset
    .tck(tck),                          // dedicated JTAG TCK pad signal
    .tms(tms),                          // dedicated JTAG TMS pad signal

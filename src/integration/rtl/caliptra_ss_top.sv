@@ -36,6 +36,9 @@ module caliptra_ss_top
     ,parameter [4:0][31:0] MCU_MBOX1_VALID_AXI_USER = {32'h4444_4444, 32'h3333_3333, 32'h2222_2222, 32'h1111_1111, 32'h0000_0000}
     ,parameter MCU_SRAM_SIZE_KB = 512
     ,parameter bit LCC_SecVolatileRawUnlockEn = 1
+    ,parameter LCC_IDCODE_VALUE = 32'h0000_0001
+    ,parameter MCU_IDCODE_VALUE = 32'h0000_0000
+    ,parameter CSS_IDCODE_VALUE = 32'h0000_0000
 ) (
     input logic cptra_ss_clk_i,
     output logic cptra_ss_rdc_clk_cg_o,
@@ -566,7 +569,10 @@ module caliptra_ss_top
     //=========================================================================-
     // MCU instance
     //=========================================================================-
-    mcu_top rvtop_wrapper (
+    mcu_top #(
+          .pt(pt),
+          .MCU_IDCODE_VALUE(MCU_IDCODE_VALUE)
+    ) rvtop_wrapper (
         .rst_l                  ( mcu_rst_b ),
         .dbg_rst_l              ( cptra_ss_pwrgood_i ),
         .clk                    ( mcu_clk_cg ),
@@ -841,7 +847,7 @@ module caliptra_ss_top
         .dccm_ecc_double_error  (mcu_dccm_ecc_double_error),
 
         .core_id                ('0),
-        .scan_mode              ( 1'b0 ),        // To enable scan mode
+        .scan_mode              ( cptra_ss_cptra_core_scan_mode_i ),        // To enable scan mode
         .mbist_mode             ( 1'b0 ),        // to enable mbist
 
         .dmi_core_enable   (mcu_dmi_core_enable),
@@ -1150,7 +1156,9 @@ module caliptra_ss_top
 
     lc_ctrl  #(
         .SecVolatileRawUnlockEn (LCC_SecVolatileRawUnlockEn)
-    ) u_lc_ctrl (
+        ,.IdcodeValue(LCC_IDCODE_VALUE)
+        )
+        u_lc_ctrl (
             .clk_i(cptra_ss_clk_i),
             .rst_ni(cptra_ss_rst_b_o),
             .Allow_RMA_or_SCRAP_on_PPD(cptra_ss_lc_Allow_RMA_or_SCRAP_on_PPD_i),
