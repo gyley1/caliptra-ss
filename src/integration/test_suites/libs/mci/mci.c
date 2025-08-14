@@ -126,6 +126,7 @@ const mci_reg_def_value_t reg_init_values[] = {
     {SOC_MCI_TOP_MCI_REG_MBOX1_VALID_AXI_USER_3, 0xFFFFFFFF},
     {SOC_MCI_TOP_MCI_REG_MBOX1_VALID_AXI_USER_4, 0xFFFFFFFF},
     {SOC_MCI_TOP_MCI_REG_MCU_RESET_VECTOR, 0x80000000},
+    {SOC_MCI_TOP_MCI_REG_INTERNAL_AGG_ERROR_FATAL_MASK, 0x3FFFF000}
 };
 
 /* Array of register infos by group */
@@ -185,38 +186,38 @@ const mci_register_info_t register_groups[][MAX_REGISTERS_PER_GROUP] = {
 
     // REG_GROUP_ERROR_RW1C
     {
-        { SOC_MCI_TOP_MCI_REG_HW_ERROR_FATAL, "HW_ERROR_FATAL", "Hardware Fatal Error", REG_STICKY},
-        { SOC_MCI_TOP_MCI_REG_AGG_ERROR_FATAL, "AGG_ERROR_FATAL", "Aggregated Fatal Error", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_HW_ERROR_NON_FATAL, "HW_ERROR_NON_FATAL", "Hardware Non-Fatal Error", REG_STICKY  },
-        { SOC_MCI_TOP_MCI_REG_AGG_ERROR_NON_FATAL, "AGG_ERROR_NON_FATAL", "Aggregated Non-Fatal Error", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_HW_ERROR_FATAL, "HW_ERROR_FATAL", "Hardware Ftl Err", REG_STICKY},
+        { SOC_MCI_TOP_MCI_REG_AGG_ERROR_FATAL, "AGG_ERROR_FATAL", "Aggregated Ftl Err", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_HW_ERROR_NON_FATAL, "HW_ERROR_NON_FATAL", "Hardware Non-Ftl Err", REG_STICKY  },
+        { SOC_MCI_TOP_MCI_REG_AGG_ERROR_NON_FATAL, "AGG_ERROR_NON_FATAL", "Aggregated Non-Ftl Err", REG_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
     
     // REG_GROUP_ERROR
     {
-        { SOC_MCI_TOP_MCI_REG_FW_ERROR_FATAL, "FW_ERROR_FATAL", "Firmware Fatal Error", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_ERROR_NON_FATAL, "FW_ERROR_NON_FATAL", "Firmware Non-Fatal Error", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_HW_ERROR_ENC, "HW_ERROR_ENC", "Hardware Error Enc", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_ERROR_ENC, "FW_ERROR_ENC", "Firmware Error Enc", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_0, "FW_EXTENDED_ERROR_INFO_0", "Firmware Extended Error Info 0", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_1, "FW_EXTENDED_ERROR_INFO_1", "Firmware Extended Error Info 1", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_2, "FW_EXTENDED_ERROR_INFO_2", "Firmware Extended Error Info 2", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_3, "FW_EXTENDED_ERROR_INFO_3", "Firmware Extended Error Info 3", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_4, "FW_EXTENDED_ERROR_INFO_4", "Firmware Extended Error Info 4", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_5, "FW_EXTENDED_ERROR_INFO_5", "Firmware Extended Error Info 5", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_6, "FW_EXTENDED_ERROR_INFO_6", "Firmware Extended Error Info 6", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_7, "FW_EXTENDED_ERROR_INFO_7", "Firmware Extended Error Info 7", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_ERROR_FATAL, "FW_ERROR_FATAL", "Firmware Ftl Err", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_ERROR_NON_FATAL, "FW_ERROR_NON_FATAL", "Firmware Non-Ftl Err", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_HW_ERROR_ENC, "HW_ERROR_ENC", "Hardware Err Enc", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_ERROR_ENC, "FW_ERROR_ENC", "Firmware Err Enc", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_0, "FW_EXTENDED_ERROR_INFO_0", "Firmware Extended ErrInfo 0", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_1, "FW_EXTENDED_ERROR_INFO_1", "Firmware Extended ErrInfo 1", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_2, "FW_EXTENDED_ERROR_INFO_2", "Firmware Extended ErrInfo 2", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_3, "FW_EXTENDED_ERROR_INFO_3", "Firmware Extended ErrInfo 3", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_4, "FW_EXTENDED_ERROR_INFO_4", "Firmware Extended ErrInfo 4", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_5, "FW_EXTENDED_ERROR_INFO_5", "Firmware Extended ErrInfo 5", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_6, "FW_EXTENDED_ERROR_INFO_6", "Firmware Extended ErrInfo 6", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_FW_EXTENDED_ERROR_INFO_7, "FW_EXTENDED_ERROR_INFO_7", "Firmware Extended ErrInfo 7", REG_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
     
     // REG_GROUP_INTERNAL_ERROR_MASK
     {
-        { SOC_MCI_TOP_MCI_REG_INTERNAL_HW_ERROR_FATAL_MASK, "INTERNAL_HW_ERROR_FATAL_MASK", "Internal Hardware Error Fatal Mask", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTERNAL_HW_ERROR_NON_FATAL_MASK, "INTERNAL_HW_ERROR_NON_FATAL_MASK", "Internal Hardware Error Non-Fatal Mask", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTERNAL_AGG_ERROR_FATAL_MASK, "INTERNAL_AGG_ERROR_FATAL_MASK", "Internal Agg Error Fatal Mask", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTERNAL_AGG_ERROR_NON_FATAL_MASK, "INTERNAL_AGG_ERROR_NON_FATAL_MASK", "Internal Agg Error Non-Fatal Mask", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTERNAL_FW_ERROR_FATAL_MASK, "INTERNAL_FW_ERROR_FATAL_MASK", "Internal Firmware Error Fatal Mask", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTERNAL_FW_ERROR_NON_FATAL_MASK, "INTERNAL_FW_ERROR_NON_FATAL_MASK", "Internal Firmware Error Non-Fatal Mask", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTERNAL_HW_ERROR_FATAL_MASK, "INTERNAL_HW_ERROR_FATAL_MASK", "Internal Hardware ErrFtl Mask", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTERNAL_HW_ERROR_NON_FATAL_MASK, "INTERNAL_HW_ERROR_NON_FATAL_MASK", "Internal Hardware ErrNon-Ftl Mask", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTERNAL_AGG_ERROR_FATAL_MASK, "INTERNAL_AGG_ERROR_FATAL_MASK", "Internal Agg ErrFtl Mask", REG_STICKY, true },
+        { SOC_MCI_TOP_MCI_REG_INTERNAL_AGG_ERROR_NON_FATAL_MASK, "INTERNAL_AGG_ERROR_NON_FATAL_MASK", "Internal Agg ErrNon-Ftl Mask", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTERNAL_FW_ERROR_FATAL_MASK, "INTERNAL_FW_ERROR_FATAL_MASK", "Internal Firmware ErrFtl Mask", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTERNAL_FW_ERROR_NON_FATAL_MASK, "INTERNAL_FW_ERROR_NON_FATAL_MASK", "Internal Firmware ErrNon-Ftl Mask", REG_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
     
@@ -529,34 +530,34 @@ const mci_register_info_t register_groups[][MAX_REGISTERS_PER_GROUP] = {
         
     // REG_GROUP_INTERRUPT_EN
     {
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_GLOBAL_INTR_EN_R, "GLOBAL_INTR_EN_R", "Global Interrupt Enable", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTR_EN_R, "ERROR0_INTR_EN_R", "Error 0 Interrupt Enable", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR1_INTR_EN_R, "ERROR1_INTR_EN_R", "Error 1 Interrupt Enable", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTR_EN_R, "NOTIF0_INTR_EN_R", "Notification 0 Interrupt Enable", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF1_INTR_EN_R, "NOTIF1_INTR_EN_R", "Notification 1 Interrupt Enable", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_GLOBAL_INTR_EN_R, "GLOBAL_INTR_EN_R", "Global Intrpt Enable", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTR_EN_R, "ERROR0_INTR_EN_R", "Err0 Intrpt Enable", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR1_INTR_EN_R, "ERROR1_INTR_EN_R", "Err1 Intrpt Enable", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTR_EN_R, "NOTIF0_INTR_EN_R", "Notification 0 Intrpt Enable", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF1_INTR_EN_R, "NOTIF1_INTR_EN_R", "Notification 1 Intrpt Enable", REG_NOT_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
 
     // REG_GROUP_INTERRUPT_GLOBAL_STATUS_RO
     {
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_GLOBAL_INTR_R, "ERROR_GLOBAL_INTR_R", "Error Global Interrupt", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_GLOBAL_INTR_R, "NOTIF_GLOBAL_INTR_R", "Notification Global Interrupt", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_GLOBAL_INTR_R, "ERROR_GLOBAL_INTR_R", "Err Global Intrpt", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_GLOBAL_INTR_R, "NOTIF_GLOBAL_INTR_R", "Notification Global Intrpt", REG_NOT_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
 
     // REG_GROUP_INTERRUPT_STATUS_RW1C
     {
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R, "ERROR0_INTERNAL_INTR_R", "Error 0 Internal Interrupt", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR1_INTERNAL_INTR_R, "ERROR1_INTERNAL_INTR_R", "Error 1 Internal Interrupt", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTERNAL_INTR_R, "NOTIF0_INTERNAL_INTR_R", "Notification 0 Internal Interrupt", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF1_INTERNAL_INTR_R, "NOTIF1_INTERNAL_INTR_R", "Notification 1 Internal Interrupt", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R, "ERROR0_INTERNAL_INTR_R", "Err0 Internal Intrpt", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR1_INTERNAL_INTR_R, "ERROR1_INTERNAL_INTR_R", "Err1 Internal Intrpt", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTERNAL_INTR_R, "NOTIF0_INTERNAL_INTR_R", "Notification 0 Internal Intrpt", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF1_INTERNAL_INTR_R, "NOTIF1_INTERNAL_INTR_R", "Notification 1 Internal Intrpt", REG_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
 
     // REG_GROUP_INTERRUPT_TRIGGER_PULSE_RW1S
     {
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTR_TRIG_R, "ERROR0_INTR_TRIG_R", "Error 0 Internal Trigger", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR1_INTR_TRIG_R, "ERROR1_INTR_TRIG_R", "Error 1 Internal Trigger", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTR_TRIG_R, "ERROR0_INTR_TRIG_R", "Err0 Internal Trigger", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR1_INTR_TRIG_R, "ERROR1_INTR_TRIG_R", "Err1 Internal Trigger", REG_NOT_STICKY, false },
         { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTR_TRIG_R, "NOTIF0_INTR_TRIG_R", "Notification 0 Internal Trigger", REG_NOT_STICKY, false },
         { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF1_INTR_TRIG_R, "NOTIF1_INTR_TRIG_R", "Notification 1 Internal Trigger", REG_NOT_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
@@ -564,32 +565,32 @@ const mci_register_info_t register_groups[][MAX_REGISTERS_PER_GROUP] = {
 
     // REG_GROUP_INTERRUPT_ERROR0_COUNTERS
     {
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_INTERNAL_INTR_COUNT_R, "ERROR_INTERNAL_INTR_COUNT_R", "Error Internal Interrupt Count", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_MBOX0_ECC_UNC_INTR_COUNT_R, "ERROR_MBOX0_ECC_UNC_INTR_COUNT_R", "Error MBOX0 ECC Uncorrectable Interrupt Count", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_MBOX1_ECC_UNC_INTR_COUNT_R, "ERROR_MBOX1_ECC_UNC_INTR_COUNT_R", "Error MBOX1 ECC Uncorrectable Interrupt Count", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_MCU_SRAM_DMI_AXI_COLLISION_INTR_COUNT_R, "ERROR_MCU_SRAM_DMI_AXI_COLLISION_INTR_COUNT_R", "Error MCU SRAM DMI AXI Collision Interrupt Count", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_WDT_TIMER1_TIMEOUT_INTR_COUNT_R, "ERROR_WDT_TIMER1_TIMEOUT_INTR_COUNT_R", "Error WDT Timer1 Timeout Interrupt Count", REG_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_WDT_TIMER2_TIMEOUT_INTR_COUNT_R, "ERROR_WDT_TIMER2_TIMEOUT_INTR_COUNT_R", "Error WDT Timer2 Timeout Interrupt Count", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_INTERNAL_INTR_COUNT_R, "ERROR_INTERNAL_INTR_COUNT_R", "Err Internal Intrpt Count", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_MBOX0_ECC_UNC_INTR_COUNT_R, "ERROR_MBOX0_ECC_UNC_INTR_COUNT_R", "Err MBOX0 ECC Uncorrectable Intrpt Count", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_MBOX1_ECC_UNC_INTR_COUNT_R, "ERROR_MBOX1_ECC_UNC_INTR_COUNT_R", "Err MBOX1 ECC Uncorrectable Intrpt Count", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_MCU_SRAM_DMI_AXI_COLLISION_INTR_COUNT_R, "ERROR_MCU_SRAM_DMI_AXI_COLLISION_INTR_COUNT_R", "Err MCU SRAM DMI AXI Collision Intrpt Count", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_WDT_TIMER1_TIMEOUT_INTR_COUNT_R, "ERROR_WDT_TIMER1_TIMEOUT_INTR_COUNT_R", "Err WDT Timer1 Timeout Intrpt Count", REG_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR_WDT_TIMER2_TIMEOUT_INTR_COUNT_R, "ERROR_WDT_TIMER2_TIMEOUT_INTR_COUNT_R", "Err WDT Timer2 Timeout Intrpt Count", REG_STICKY, false },
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
 
     // REG_GROUP_INTERRUPT_NOTIF0_COUNTERS
     {
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MCU_SRAM_ECC_COR_INTR_COUNT_R, "NOTIF_MCU_SRAM_ECC_COR_INTR_COUNT_R", "Notification MCU SRAM ECC Correctable Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_CPTRA_MCU_RESET_REQ_INTR_COUNT_R, "NOTIF_CPTRA_MCU_RESET_REQ_INTR_COUNT_R", "Notification CPTRA MCU Reset Request Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_GEN_IN_TOGGLE_INTR_COUNT_R, "NOTIF_GEN_IN_TOGGLE_INTR_COUNT_R", "Notification General Input Toggle Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_TARGET_DONE_INTR_COUNT_R, "NOTIF_MBOX0_TARGET_DONE_INTR_COUNT_R", "Notification MBOX0 Target Done Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_TARGET_DONE_INTR_COUNT_R, "NOTIF_MBOX1_TARGET_DONE_INTR_COUNT_R", "Notification MBOX1 Target Done Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_CMD_AVAIL_INTR_COUNT_R, "NOTIF_MBOX0_CMD_AVAIL_INTR_COUNT_R", "Notification MBOX0 Command Available Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_CMD_AVAIL_INTR_COUNT_R, "NOTIF_MBOX1_CMD_AVAIL_INTR_COUNT_R", "Notification MBOX1 Command Available Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_CPTRA_MBOX_CMD_AVAIL_INTR_COUNT_R, "NOTIF_CPTRA_MBOX_CMD_AVAIL_INTR_COUNT_R", "Notification CPTRA MBOX Command Available Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_ECC_COR_INTR_COUNT_R, "NOTIF_MBOX0_ECC_COR_INTR_COUNT_R", "Notification MBOX0 ECC Correctable Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_ECC_COR_INTR_COUNT_R, "NOTIF_MBOX1_ECC_COR_INTR_COUNT_R", "Notification MBOX1 ECC Correctable Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_DEBUG_LOCKED_INTR_COUNT_R, "NOTIF_DEBUG_LOCKED_INTR_COUNT_R", "Notification Debug Locked Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_SCAN_MODE_INTR_COUNT_R, "NOTIF_SCAN_MODE_INTR_COUNT_R", "Notification Scan Mode Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_SOC_REQ_LOCK_INTR_COUNT_R, "NOTIF_MBOX0_SOC_REQ_LOCK_INTR_COUNT_R", "Notification MBOX0 SOC Request Lock Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_SOC_REQ_LOCK_INTR_COUNT_R, "NOTIF_MBOX1_SOC_REQ_LOCK_INTR_COUNT_R", "Notification MBOX1 SOC Request Lock Interrupt Count", REG_NOT_STICKY, false },
-        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_OTP_OPERATION_DONE_INTR_COUNT_R, "NOTIF_OTP_OPERATION_DONE_INTR_COUNT_R", "Notification OTP Operation Done Interrupt Count", REG_NOT_STICKY, false} ,
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MCU_SRAM_ECC_COR_INTR_COUNT_R, "NOTIF_MCU_SRAM_ECC_COR_INTR_COUNT_R", "Notification MCU SRAM ECC Correctable Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_CPTRA_MCU_RESET_REQ_INTR_COUNT_R, "NOTIF_CPTRA_MCU_RESET_REQ_INTR_COUNT_R", "Notification CPTRA MCU Reset Request Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_GEN_IN_TOGGLE_INTR_COUNT_R, "NOTIF_GEN_IN_TOGGLE_INTR_COUNT_R", "Notification General Input Toggle Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_TARGET_DONE_INTR_COUNT_R, "NOTIF_MBOX0_TARGET_DONE_INTR_COUNT_R", "Notification MBOX0 Target Done Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_TARGET_DONE_INTR_COUNT_R, "NOTIF_MBOX1_TARGET_DONE_INTR_COUNT_R", "Notification MBOX1 Target Done Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_CMD_AVAIL_INTR_COUNT_R, "NOTIF_MBOX0_CMD_AVAIL_INTR_COUNT_R", "Notification MBOX0 Command Available Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_CMD_AVAIL_INTR_COUNT_R, "NOTIF_MBOX1_CMD_AVAIL_INTR_COUNT_R", "Notification MBOX1 Command Available Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_CPTRA_MBOX_CMD_AVAIL_INTR_COUNT_R, "NOTIF_CPTRA_MBOX_CMD_AVAIL_INTR_COUNT_R", "Notification CPTRA MBOX Command Available Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_ECC_COR_INTR_COUNT_R, "NOTIF_MBOX0_ECC_COR_INTR_COUNT_R", "Notification MBOX0 ECC Correctable Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_ECC_COR_INTR_COUNT_R, "NOTIF_MBOX1_ECC_COR_INTR_COUNT_R", "Notification MBOX1 ECC Correctable Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_DEBUG_LOCKED_INTR_COUNT_R, "NOTIF_DEBUG_LOCKED_INTR_COUNT_R", "Notification Debug Locked Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_SCAN_MODE_INTR_COUNT_R, "NOTIF_SCAN_MODE_INTR_COUNT_R", "Notification Scan Mode Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX0_SOC_REQ_LOCK_INTR_COUNT_R, "NOTIF_MBOX0_SOC_REQ_LOCK_INTR_COUNT_R", "Notification MBOX0 SOC Request Lock Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_MBOX1_SOC_REQ_LOCK_INTR_COUNT_R, "NOTIF_MBOX1_SOC_REQ_LOCK_INTR_COUNT_R", "Notification MBOX1 SOC Request Lock Intrpt Count", REG_NOT_STICKY, false },
+        { SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF_OTP_OPERATION_DONE_INTR_COUNT_R, "NOTIF_OTP_OPERATION_DONE_INTR_COUNT_R", "Notification OTP Operation Done Intrpt Count", REG_NOT_STICKY, false} ,
         { 0, NULL, NULL, REG_NOT_STICKY, false }  // End marker
     },
 
@@ -634,9 +635,9 @@ const char* get_group_name(mci_register_group_t group) {
         case REG_GROUP_STATUS: return "Status";
         case REG_GROUP_STATUS_RO: return "Status-RO";
         case REG_GROUP_SECURITY_RO: return "Security-RO";
-        case REG_GROUP_ERROR_RW1C: return "Fatal/Non-Fatal Error W1C";
-        case REG_GROUP_ERROR: return "Fatal/Non-Fatal Error";
-        case REG_GROUP_INTERNAL_ERROR_MASK: return "Internal Error Mask";
+        case REG_GROUP_ERROR_RW1C: return "Ftl/Non-Ftl err W1C";
+        case REG_GROUP_ERROR: return "Ftl/Non-Ftl Err";
+        case REG_GROUP_INTERNAL_ERROR_MASK: return "Internal err Mask";
         case REG_GROUP_WATCHDOG: return "Watchdog";
         case REG_GROUP_WATCHDOG_RO: return "Watchdog-RO";
         case REG_GROUP_MCU: return "MCU";
@@ -664,12 +665,12 @@ const char* get_group_name(mci_register_group_t group) {
         case REG_GROUP_DEBUG_UNLOCK_PK_HASH_5: return "Debug Unlock PK Hash 5";
         case REG_GROUP_DEBUG_UNLOCK_PK_HASH_6: return "Debug Unlock PK Hash 6";
         case REG_GROUP_DEBUG_UNLOCK_PK_HASH_7: return "Debug Unlock PK Hash 7";
-        case REG_GROUP_INTERRUPT_EN: return "Interrupt Enable";
-        case REG_GROUP_INTERRUPT_GLOBAL_STATUS_RO: return "Interrupt Global Status RO";
-        case REG_GROUP_INTERRUPT_STATUS_RW1C: return "Interrupt Status W1C";
-        case REG_GROUP_INTERRUPT_TRIGGER_PULSE_RW1S: return "Interrupt Trigger Pulse W1S";
-        case REG_GROUP_INTERRUPT_ERROR0_COUNTERS: return "Error 0 Interrupt Counters";
-        case REG_GROUP_INTERRUPT_NOTIF0_COUNTERS: return "Notif 0 Interrupt Counters";
+        case REG_GROUP_INTERRUPT_EN: return "Intrpt Enable";
+        case REG_GROUP_INTERRUPT_GLOBAL_STATUS_RO: return "Intrpt Global Status RO";
+        case REG_GROUP_INTERRUPT_STATUS_RW1C: return "Intrpt Status W1C";
+        case REG_GROUP_INTERRUPT_TRIGGER_PULSE_RW1S: return "Intrpt Trigger Pulse W1S";
+        case REG_GROUP_INTERRUPT_ERROR0_COUNTERS: return "Err 0 Intrpt Counters";
+        case REG_GROUP_INTERRUPT_NOTIF0_COUNTERS: return "Notif 0 Intrpt Counters";
         case REG_GROUP_TRACE: return "Trace";
         case REG_GROUP_TRACE_RO: return "Trace-RO";
         case REG_GROUP_SOC_MBOX_CSR: return "SOC Mailbox CSR";
@@ -916,13 +917,16 @@ void reset_exp_reg_data(mci_reg_exp_dict_t *dict, reset_type_t reset_type, mci_r
     const mci_register_info_t *intr_sts_reg;
     const mci_register_info_t *axi_user_lock_reg;
     const mci_register_info_t *capabilities_reg;
+    const mci_register_info_t *cap_lock_reg;
     uint32_t glb_sts_mask;
     uint32_t intr_sts_mask;
     uint32_t err_data;
     uint32_t read_intr_sts;
     uint32_t axi_user_lock;
+    uint32_t cap_lock_reg_value = 0;
     bool update_axi_user = false;
     bool update_config_reg = false;
+    bool update_cap_lock_reg = false;
     bool reset_reason_reg = false;
     bool update_exp_data = false;
 
@@ -977,13 +981,28 @@ void reset_exp_reg_data(mci_reg_exp_dict_t *dict, reset_type_t reset_type, mci_r
         }
     }
 
+    if (group_index == REG_GROUP_CAPABILITIES) {
+        if (reg_index <= 1) {
+            cap_lock_reg = get_register_info(REG_GROUP_CAPABILITIES, 2);
+            cap_lock_reg_value = mci_reg_read(cap_lock_reg->address);
+            if (cap_lock_reg_value == 0) {
+                update_config_reg = true;
+            }
+        } else if (reg_index == 2) {
+            if (ss_config_done == 0) {
+                update_cap_lock_reg = true;
+            }
+        }   
+    }
+
+    /*
     if (group_index == REG_GROUP_CAPABILITIES && reg_index <= 2) {
         capabilities_reg = get_register_info(REG_GROUP_CAPABILITIES, reg_index);
         if (ss_config_done == 0) {
             update_config_reg = true;
         }
     }
-
+    */
 
 
     // Special handling as stickiness is different for different fields
@@ -995,14 +1014,14 @@ void reset_exp_reg_data(mci_reg_exp_dict_t *dict, reset_type_t reset_type, mci_r
     bool force_update = (address == SOC_MCI_TOP_MCI_REG_SS_CONFIG_DONE_STICKY);
     
     // Standard update condition
-    if (ss_config_done_sticky == 0 || reg_info->is_sticky != REG_CONFIG_DONE_STICKY || force_update || update_axi_user || update_config_reg) {
+    if (ss_config_done_sticky == 0 || reg_info->is_sticky != REG_CONFIG_DONE_STICKY || force_update || update_axi_user || update_config_reg || update_cap_lock_reg) {
     	update_exp_data = true;
     }
 
     // Special case for capabilities registers - override the above conditions
-    if (group_index == REG_GROUP_CAPABILITIES && reg_index <= 2 && ss_config_done == 1) {
-        update_exp_data = false;  // Block update regardless of other conditions 
-        VPRINTF(MEDIUM, "Capabilities REG %d, config done = %d, update_exp_data = %d\n", reg_index, ss_config_done, update_exp_data);
+    if (group_index == REG_GROUP_CAPABILITIES && reg_index <= 2 && cap_lock_reg_value == 1) {
+        update_exp_data = false;  // Block update regardless of other conditions
+        VPRINTF(MEDIUM, "Capabilities REG %d, cap lock = %d, update_exp_data = %d\n", reg_index, cap_lock_reg_value, update_exp_data);
     }
     
 
@@ -1371,15 +1390,28 @@ int read_register_group_and_verify(mci_register_group_t group, mci_reg_exp_dict_
                 } else if (reset_type == WARM_RESET) {
                     if (reg->is_sticky == REG_STICKY || reg->is_sticky == REG_CONFIG_DONE_STICKY) {
                         if (get_reg_exp_data(&g_expected_data_dict, reg->address, &exp_data) == 0) {
-                            if (reg->address == SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTERNAL_INTR_R) {
-                                exp_data = 0x400; // debug_locked_en_sts is set on Warm Reset
-                            } else if (reg->address == SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTERNAL_INTR_R) {
-                                exp_data = 0x0;
-                            }
                             VPRINTF(MEDIUM, "Expected data for %s = 0x%0x\n", reg->name, exp_data);
                             // Compare and report
-                            if (reg->address == SOC_MCI_TOP_MCI_REG_RESET_REASON) {
-                                exp_data = exp_data | MCI_REG_RESET_REASON_WARM_RESET_MASK & ~(MCI_REG_RESET_REASON_FW_BOOT_UPD_RESET_MASK | MCI_REG_RESET_REASON_FW_HITLESS_UPD_RESET_MASK); // bits 0 & 1 are not sticky
+                            if (group == REG_GROUP_INTERRUPT_ERROR0_COUNTERS) {
+                                if ((i == 0 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_MCU_SRAM_DMI_AXI_COLLISION_STS_MASK)) ||
+                                    (i == 1 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_INTERNAL_STS_MASK)) ||
+                                    (i == 2 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_MBOX0_ECC_UNC_STS_MASK)) ||
+                                    (i == 3 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_MBOX1_ECC_UNC_STS_MASK)) ||
+                                    (i == 4 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_WDT_TIMER1_TIMEOUT_STS_MASK)) ||
+                                    (i == 5 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_WDT_TIMER2_TIMEOUT_STS_MASK))) {
+                                    if (read_data >= exp_data) {
+                                        VPRINTF(MEDIUM,"  Match: %s (0x%08x): Read 0x%08x > Expected 0x%08x\n", reg->name, reg->address, read_data, exp_data);
+                                    } else {
+                                        VPRINTF(LOW, "  No match: %s (0x%08x): Read 0x%08x, Expected 0x%08x\n", reg->name, reg->address, read_data, exp_data);
+                                        mismatch_count++;
+                                    } 
+                                }
+                            } else if (reg->address == SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF0_INTERNAL_INTR_R) {
+                                exp_data |= MCI_REG_INTR_BLOCK_RF_NOTIF0_INTERNAL_INTR_R_NOTIF_DEBUG_LOCKED_STS_MASK; // debug_locked_en_sts is set on Warm Reset
+                            } else if (reg->address == SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_NOTIF1_INTERNAL_INTR_R) {
+                                exp_data = 0;
+                            } else if (reg->address == SOC_MCI_TOP_MCI_REG_RESET_REASON) {
+                                exp_data = exp_data & ~(MCI_REG_RESET_REASON_FW_BOOT_UPD_RESET_MASK | MCI_REG_RESET_REASON_FW_HITLESS_UPD_RESET_MASK) | MCI_REG_RESET_REASON_WARM_RESET_MASK; // bits 0 & 1 are not sticky
                                 if (read_data == exp_data) {
                                     VPRINTF(MEDIUM,"  Match: %s (0x%08x): Read 0x%08x, Expected 0x%08x\n",reg->name, reg->address, read_data, exp_data); 
                                 } else {
@@ -1404,6 +1436,7 @@ int read_register_group_and_verify(mci_register_group_t group, mci_reg_exp_dict_
                     } else {
                         if (reg->has_init_value == false && ro_reg == false) {
                             exp_data  = 0;
+                            
                             if (read_data == exp_data) {
                                 VPRINTF(MEDIUM,"  Match: %s (0x%08x): Read 0x%08x, Expected 0x%08x\n", reg->name, reg->address, read_data, exp_data);
                             } else if (group == REG_GROUP_INTERRUPT_GLOBAL_STATUS_RO) {
@@ -1459,21 +1492,7 @@ int read_register_group_and_verify(mci_register_group_t group, mci_reg_exp_dict_
                                         VPRINTF(LOW, "  No match: %s (0x%08x): Read 0x%08x, Expected 0x%08x\n", reg->name, reg->address, read_data, exp_data);
                                     mismatch_count++;
                                     }
-                                }
-                            } else if (group == REG_GROUP_INTERRUPT_ERROR0_COUNTERS) {
-                                if ((i == 0 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_MCU_SRAM_DMI_AXI_COLLISION_STS_MASK)) ||
-                                    (i == 1 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_INTERNAL_STS_MASK)) ||
-                                    (i == 2 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_MBOX0_ECC_UNC_STS_MASK)) ||
-                                    (i == 3 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_MBOX1_ECC_UNC_STS_MASK)) ||
-                                    (i == 4 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_WDT_TIMER1_TIMEOUT_STS_MASK)) ||
-                                    (i == 5 && (mci_reg_read(SOC_MCI_TOP_MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R) & MCI_REG_INTR_BLOCK_RF_ERROR0_INTERNAL_INTR_R_ERROR_WDT_TIMER2_TIMEOUT_STS_MASK))) {
-                                    if (read_data >= exp_data) {
-                                        VPRINTF(MEDIUM,"  Match: %s (0x%08x): Read 0x%08x > Expected 0x%08x\n", reg->name, reg->address, read_data, exp_data);
-                                    } else {
-                                        VPRINTF(LOW, "  No match: %s (0x%08x): Read 0x%08x, Expected 0x%08x\n", reg->name, reg->address, read_data, exp_data);
-                                        mismatch_count++;
-                                    } 
-                                }
+                                } 
                             } else {
                                 VPRINTF(LOW, "  No match: %s (0x%08x): Read 0x%08x, Expected 0x%08x\n", reg->name, reg->address, read_data, exp_data);
                                 mismatch_count++;

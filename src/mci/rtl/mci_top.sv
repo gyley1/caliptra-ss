@@ -66,6 +66,11 @@ module mci_top
     input logic [$bits(s_axi_r_if.aruser)-1:0] strap_mcu_sram_config_axi_user,
     input logic [$bits(s_axi_r_if.aruser)-1:0] strap_mci_soc_config_axi_user,
     input logic ss_debug_intent,
+    
+    // RDC
+    output logic rdc_clk_dis,
+    output logic fw_update_rdc_clk_dis,
+    output logic early_warm_reset_warn,
 
     // SRAM ADHOC connections
     input logic mcu_sram_fw_exec_region_lock,
@@ -162,6 +167,7 @@ module mci_top
 
     // Inputs from LCC
     input  otp_ctrl_pkg::lc_otp_program_req_t           from_lcc_to_otp_program_i,
+    input logic                                         lcc_volatile_raw_unlock_success_i,
     input lc_ctrl_pkg::lc_tx_t                          lc_dft_en_i,
     input lc_ctrl_pkg::lc_tx_t                          lc_hw_debug_en_i,
     input                                               lc_fatal_state_error_i,
@@ -246,12 +252,7 @@ module mci_top
 
     // Other
     logic mci_ss_debug_intent;
-    logic early_warm_reset_warn;
 
-    // RDC
-
-    logic rdc_clk_dis;
-    logic fw_update_rdc_clk_dis;
 
 
 
@@ -803,6 +804,7 @@ mci_lcc_st_trans LCC_state_translator (
     .early_warm_reset_warn,
     .state_error(lc_fatal_state_error_i),  
     .from_lcc_to_otp_program_i(from_lcc_to_otp_program_i),
+    .lcc_volatile_raw_unlock_success_i(lcc_volatile_raw_unlock_success_i),
     .lc_dft_en_i(lc_dft_en_i),
     .lc_hw_debug_en_i(lc_hw_debug_en_i),
     .from_otp_to_lcc_program_i(from_otp_to_lcc_program_i),

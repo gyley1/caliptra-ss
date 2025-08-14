@@ -108,7 +108,7 @@ module otp_ctrl
   assign core_axi_wr_rsp.awready = core_axi_if.awready;
 
   assign core_axi_if.wdata       = core_axi_wr_req.wdata;
-  assign core_axi_if.wuser       = '0; // FIXME
+  assign core_axi_if.wuser       = '0; 
   assign core_axi_if.wstrb       = core_axi_wr_req.wstrb;
   assign core_axi_if.wlast       = core_axi_wr_req.wlast;
   assign core_axi_if.wvalid      = core_axi_wr_req.wvalid;
@@ -398,9 +398,9 @@ module otp_ctrl
     // the write is allowed by the volatile lock of the `VENDOR_PK_HASH_VOLATILE LOCK` register.
     if (NumVendorPkFuses > 1) begin
       if (dai_cmd == DaiWrite && reg2hw.vendor_pk_hash_volatile_lock != '0 &&
-          dai_addr >= VendorHashesProdPartitionOffset &&
-          dai_addr < VendorHashesProdPartitionDigestOffset) begin
-        if (32'(dai_addr) >= (VendorHashesProdPartitionOffset + (reg2hw.vendor_pk_hash_volatile_lock * (CptraCoreVendorPkHash1Size + CptraCorePqcKeyType1Size)))) begin
+          dai_addr >= ProdVendorHashStart &&
+          dai_addr < ProdVendorHashEnd) begin
+        if (32'(dai_addr) >= (ProdVendorHashStart + ((reg2hw.vendor_pk_hash_volatile_lock-1) * ProdVendorHashSize))) begin
           part_access_pre[VendorHashesProdPartitionIdx].write_lock = MuBi8True;
         end
       end

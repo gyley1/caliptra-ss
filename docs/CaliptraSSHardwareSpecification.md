@@ -318,17 +318,21 @@ The DMA assist initiates transactions on the AXI manager interface in compliance
 
 In the AXI DMA control state machine, both the read and write interfaces have their own “route”. A route is configured for read and write channels for every DMA operation that is requested. Routes determine how data flows through the DMA block.
 
-Read routes always apply when an AXI read is requested. Any AXI read will push the response data into the internal FIFO. The read route determines where this data will ultimately be sent when it is popped from the FIFO. For the AHB route, data from the FIFO is populated to the dataout register, where it may be read via AHB by the Caliptra RV core. For the mailbox route, data from the FIFO flows into the mailbox; for these operations, the mailbox address is determined by the destination address register value, with an offset applied based on how many bytes have been written to the mailbox. For the AXI route, data from the FIFO flows into the AXI Write Manager, whereupon it is sent out to AXI on the WDATA signal.
+Read routes always apply when an AXI read is requested and must be disabled otherwise. Any AXI read pushes the response data into the internal FIFO. The read route determines where this data is ultimately sent when it is popped from the FIFO. For the AHB route, data from the FIFO is populated to the dataout register, where it may be read via AHB by the Caliptra RV core. For the mailbox route, data from the FIFO flows into the mailbox; for these operations, the mailbox address is determined by the destination address register value, with an offset applied based on how many bytes have been written to the mailbox. For the AXI route, data from the FIFO flows into the AXI Write Manager, whereupon it is sent out to AXI on the WDATA signal. For the Read DISABLE route, data output from the FIFO always flows into the AXI write channel. In this case, data originates from a source other than an AXI read, so AXI reads are inactive.
 
-Write routes always apply when an AXI write is requested. Any AXI write will read data from the internal FIFO before sending it over AXI. The write route determines where this data originates before it is pushed onto the FIFO. For the AHB route, a write to the datain register via AHB results in write data being pushed onto the FIFO. For the mailbox route, data is read from the mailbox and pushed onto the FIFO; for these operations, the mailbox address is determined by the source address register value, with an offset applied based on how many bytes have been read from the mailbox. For the AXI route, data flows from the AXI Read Manager into the FIFO.
+Write routes always apply when an AXI write is requested and must be disabled otherwise. Any AXI write reads data from the internal FIFO before sending it over AXI. The write route determines where this data originates before it is pushed onto the FIFO. For the AHB route, a write to the datain register via AHB results in write data being pushed onto the FIFO. For the mailbox route, data is read from the mailbox and pushed onto the FIFO; for these operations, the mailbox address is determined by the source address register value, with an offset applied based on how many bytes have been read from the mailbox. For the AXI route, data flows from the AXI Read Manager into the FIFO. For the Write DISABLE route, data received on the AXI read channel is always pushed into the FIFO and then sent to an internal destination rather than a destination on the AXI bus, so AXI writes are inactive.
 
-*Example 1: Write Route \== MBOX*
+*Example 1: Write Route \== MBOX and Read Route \== DISABLE*
 
 ![](./images/Caliptra-AXI-DMA-WR.png)
 
-*Example 2: Read Route \== AHB*
+*Example 2: Read Route \== AHB and Write Route \== DISABLE*
 
 ![](./images/Caliptra-AXI-DMA-RD.png)
+
+*Example 3: Read Route \== AXI and Write Route \== AXI*
+
+![](./images/Caliptra-AXI-DMA-RD-WR.png)
 
 
 ## OCP Streaming Boot Payloads
@@ -392,7 +396,7 @@ FUSE controller is an RTL module that is responsible for programming and reading
 
 ## Partition Details
 
-The Fuse Controller supports a total of **13 partitions** (See [Fuse Controller's Fuse Partition Map](../src/fuse_ctrl/doc/otp_ctrl_mmap.md)). Secret FUSE partitions are prefixed with the word "Secret" and are associated with specific Life Cycle (LC) states, such as "MANUF" or "PROD." This naming convention indicates the LC state required to provision each partition.
+The Fuse Controller is configured a total of **16 partitions** (See [Fuse Controller's Fuse Partition Map](../src/fuse_ctrl/doc/otp_ctrl_mmap.md)), while it can support different number of partitions based on SoC product requirements. Secret FUSE partitions are prefixed with the word "Secret" and are associated with specific Life Cycle (LC) states, such as "MANUF" or "PROD." This naming convention indicates the LC state required to provision each partition.
 
 ### Key Characteristics of Secret Partitions:
 1. **Programming Access:**  
@@ -488,19 +492,17 @@ Zeroization occurs under the following conditions:
 
 2. **Transient Condition (Before Cold Reset):**  
    - The **`cptra_ss_FIPS_ZEROIZATION_PPD_i`** GPIO pin must be **asserted high**.
-   - The **`ss_soc_MCU_ROM_zeroization_mask_reg`** must also be set.
+   - MCU ROM support is needed.
 
 ### Zeroization Process
 
-1. A new input port, `cptra_ss_FIPS_ZEROIZATION_PPD_i`, is introduced in the Caliptra Subsystem.
+1. A new input port, `cptra_ss_FIPS_ZEROIZATION_PPD_i`, is introduced in the Caliptra Subsystem. SoC integrator needs to connect this signal to MCI generic input wires (see [MCI Generic Input Allocation](./CaliptraSSIntegrationSpecification.md#mci-integration-requirements)).
 2. When this signal is asserted, it triggers preemptive zeroization of secret FUSEs before the SCRAP state transition.
 3. The **MCU ROM** samples `cptra_ss_FIPS_ZEROIZATION_PPD_i` by reading the corresponding register storing its value.
-4. If `cptra_ss_FIPS_ZEROIZATION_PPD_i == HIGH`, the MCU ROM executes the following sequence:
-   1. Writes `32'hFFFF_FFFF` to the `ss_soc_MCU_ROM_zeroization_mask_reg` register of **MCI**.
-   2. Creates a **Life Cycle Controller (LCC) transition request** to switch to the **SCRAP** state.
+4. If `cptra_ss_FIPS_ZEROIZATION_PPD_i == HIGH`, the MCU ROM executes a **Life Cycle Controller (LCC) transition request** to switch to the **SCRAP** state.
 
 - **Note:** The LCC state transition to SCRAP is completed **only after a cold reset**.
-- **Note:** The `ss_soc_MCU_ROM_zeroization_mask_reg` register can be set only by MCU ROM that prohibits run-time firmware to update this register.
+
 
 ### Cold Reset and Final Zeroization
 
@@ -846,10 +848,10 @@ The registers can be split up into a few different categories:
 | **Write restrictions**     | **Description**     | 
 | :---------     | :---------| 
 | MCU Only        | These registers are only meant for MCU to have access. There is no reason for SOC or the MCI SOC Config User to access the. Example is the MTIMER|
-| MCU or MCSU      |  Access restricted to trusted agents but not locked. Example:RESET_REQUEST for MCU. |
-| MCU or MCRSU      |  Access restricted to trusted agents but not locked. Example:RESET_REASON for MCU. |
-| MCU or MCSU and CONFIG locked      | Locked configuration by MCU ROM/MCSU and configured after each warm reset |
-| Sticky MCU or MCSU and CONFIG locked      | Locked configuration by MCU ROM/MCSU and configured after each cold reset |
+| MCU or MSCU      |  Access restricted to trusted agents but not locked. Example:RESET_REQUEST for MCU. |
+| MCU or MSRCU      |  Access restricted to trusted agents but not locked. Example:RESET_REASON for MCU. |
+| MCU or MSCU and CONFIG locked      | Locked configuration by MCU ROM/MSCU and configured after each warm reset |
+| Sticky MCU or MSCU and CONFIG locked      | Locked configuration by MCU ROM/MSCU and configured after each cold reset |
 | Locked by SS_CONFIG_DONE_STICKY        | Configuration once per cold reset. |
 | Locked by SS_CONFIG_DONE        | Configuration once per warm reset. |
 | MCU or MSCU until CAP_LOCK       | Configured by a trusted agent to show HW/FW capabilieds then locked until next warm reset |
@@ -1006,6 +1008,7 @@ If a second Target user is required it is the MCU's responsibility to:
 Otherwise these registers are cleared when the mailbox lock is released. 
 
 Target users must be an [MCU Mailbox trusted user](mcu-mailbox-limited-trusted-AXI-user)
+
 #### MCU Mailbox Fully addressable SRAM
 
 The SRAM is fully addressable and reads are not destructive in this mailbox.
@@ -1015,6 +1018,8 @@ The SRAM is fully addressable and reads are not destructive in this mailbox.
 **Max Size**: 2MB
 
 If set to 0 the mailbox is not instantiated. 
+
+Accesses must be DWORD aligned and BYTE accesses are not supported by the SRAM.
 
 #### MCU Mailbox SRAM Clearing
 

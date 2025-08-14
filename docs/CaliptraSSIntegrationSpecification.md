@@ -28,6 +28,7 @@
     - [Caliptra Subsystem Reference Register Map](#caliptra-subsystem-reference-register-map)
     - [FW Execution Control Connections](#fw-execution-control-connections)
     - [Caliptra Core Reset Control](#caliptra-core-reset-control)
+    - [MCU Reset Control](#mcu-reset-control)
   - [SRAM implementation](#sram-implementation)
     - [Overview](#overview-1)
     - [RISC-V internal memory export](#risc-v-internal-memory-export)
@@ -36,7 +37,7 @@
     - [Example SRAM machine check reliability integration](#example-sram-machine-check-reliability-integration)
       - [Error detection and logging](#error-detection-and-logging)
       - [Error injection](#error-injection)
-      - [Caliptra Subsystem error and recovery flow](#caliptra-subsystem-error-and-recovery-flow)
+      - [Caliptra Subsystem error handling flow](#caliptra-subsystem-error-handling-flow)
   - [Programming interface](#programming-interface)
   - [Sequences](#sequences)
   - [How to test](#how-to-test)
@@ -52,7 +53,8 @@
   - [Overview](#overview-3)
   - [Parameters \& Defines](#parameters--defines-2)
   - [Interface](#interface)
-  - [Memory Map	/ Address map](#memory-map-address-map)
+  - [Fuse Macro Memory Map and Fuse Controller CSR Address Map](#fuse-macro-memory-map-and-fuse-controller-csr-address-map)
+    - [**SOC\_SPECIFIC\_IDEVID\_CERTIFICATE Usage**](#soc_specific_idevid_certificate-usage)
   - [FC Integration Requirements](#fc-integration-requirements)
   - [Direct Access Interface](#direct-access-interface)
   - [Initialization](#initialization)
@@ -70,7 +72,7 @@
   - [Overview](#overview-5)
   - [Parameters \& Defines](#parameters--defines-3)
   - [Interface](#interface-1)
-  - [Memory Map / Address Map](#memory-map--address-map)
+  - [Fuse Macro Memory Map / Fuse Controller CSR Address Map](#fuse-macro-memory-map--fuse-controller-csr-address-map)
   - [LC Integration Requirements](#lc-integration-requirements)
   - [Programming Interface](#programming-interface-2)
   - [Sequences: Reset, Boot](#sequences-reset-boot-1)
@@ -82,7 +84,7 @@
   - [Overview](#overview-6)
   - [Parameters \& Defines](#parameters--defines-4)
   - [Interface](#interface-2)
-  - [Memory Map	/ Address map](#memory-map-address-map-1)
+  - [Memory Map	/ Address map](#memory-map-address-map)
     - [Top Level Memory Map](#top-level-memory-map)
     - [MCU SRAM Memory Map](#mcu-sram-memory-map)
   - [MCI Integration Requirements](#mci-integration-requirements)
@@ -169,7 +171,7 @@ The components described in this document are either obtained from open-source G
 | Caliptra      | [GitHub - chipsalliance/Caliptra](https://github.com/chipsalliance/Caliptra)| [Caliptra Gen 2.0 Specification](https://github.com/chipsalliance/Caliptra/blob/main/doc/caliptra_20/Caliptra.md)
 | Caliptra-SS   | [GitHub - chipsalliance/caliptra-ss](https://github.com/chipsalliance/caliptra-ss)| [Hardware Specification Document](https://github.com/chipsalliance/caliptra-ss/blob/main/docs/CaliptraSSHardwareSpecification.md)
 | Caliptra-rtl  | [GitHub - chipsalliance/caliptra-rtl](https://github.com/chipsalliance/caliptra-rtl)      | [Caliptra RTL documentation](https://github.com/chipsalliance/caliptra-rtl/tree/main/docs) |
-| Cores-VeeR    | [GitHub - chipsalliance/Cores-VeeR-EL2](https://github.com/chipsalliance/Cores-VeeR-EL2)  | [VeeR EL2 Programmer’s Reference Manual](http://cores-swerv-el2/RISC-V_SweRV_EL2_PRM.pdf%20at%20master%20%C2%B7) |
+| Cores-VeeR    | [GitHub - chipsalliance/Cores-VeeR-EL2](https://github.com/chipsalliance/Cores-VeeR-EL2)  | [VeeR EL2 Programmer’s Reference Manual](https://chipsalliance.github.io/Cores-VeeR-EL2/html/main/docs_rendered/html/index.html) |
 | I3C-Core      | [GitHub - chipsalliance/i3c-core](https://github.com/chipsalliance/i3c-core)              | [I3C core documentation](https://github.com/chipsalliance/i3c-core?tab=readme-ov-file#i3c-core) |
 | Adams Bridge  | [GitHub - chipsalliance/adams-bridge](https://github.com/chipsalliance/adams-bridge)      | [Adams Bridge Documentation](https://github.com/chipsalliance/adams-bridge/tree/main/docs) |
 
@@ -200,11 +202,14 @@ Caliptra Subsystem includes:
 
 By performing these design and verification tasks, the integrator ensures that the Caliptra Subsystem is properly integrated and can function as intended within the larger system. Several files contain code that may be specific to an integrator's implementation and should be overridden. This overridable code is either configuration parameters with integrator-specific values or modules that implement process-specific functionality. Code in these files should be modified or replaced by integrators using components from the cell library of their fabrication vendor. The following table describes recommended modifications for each file.
 
-| Type | Name | Path |
-|------|------|------|
-| rtl | Design Top       | [caliptra_ss_top.sv](https://github.com/chipsalliance/caliptra-ss/blob/main/src/integration/rtl/caliptra_ss_top.sv)          |
-| tb  | Interconnect Top | [testbench\aaxi4_interconnect.sv](https://github.com/chipsalliance/caliptra-ss/blob/main/src/integration/testbench/aaxi4_interconnect.sv) |
-| tb  | Testbench Top    | [testbench\caliptra_ss_top_tb.sv](https://github.com/chipsalliance/caliptra-ss/blob/main/src/integration/testbench/caliptra_ss_top_tb.sv) |
+| File | Description |
+|------|------|
+| [css_mcu0_dmi_jtag_to_core_sync.v](https://github.com/chipsalliance/caliptra-ss/blob/main/src/riscv_core/veer_el2/rtl/design/dmi/css_mcu0_dmi_jtag_to_core_sync.v)      |Replace with a technology-specific sync cell. This synchronizer implements edge detection logic using a delayed flip flop on the output domain to produce a pulse output. Integrators must take care to ensure logical equivalence when replacing this logic with custom cells.|
+|[css_mcu0_beh_lib.sv](https://github.com/chipsalliance/caliptra-ss/blob/main/src/riscv_core/veer_el2/rtl/design/lib/css_mcu0_beh_lib.sv)|Replace css_mcu0_rvclkhdr/css_mcu0_rvoclkhdr with a technology-specific clock gater. Modifying this file may not be necessary if integrators override the clock gate module that is used by setting TECH_SPECIFIC_EC_RV_ICG.|
+|[css_mcu0_beh_lib.sv](https://github.com/chipsalliance/caliptra-ss/blob/main/src/riscv_core/veer_el2/rtl/design/lib/css_mcu0_beh_lib.sv)|Replace css_mcu0_rvsyncss (and css_mcu0_rvsyncss_fpga if the design will be implemented on an FPGA) with a technology-specific sync cell.|
+
+
+[Caliptra Core RTL modifications](https://github.com/chipsalliance/caliptra-rtl/blob/main/docs/CaliptraIntegrationSpecification.md#integrator-rtl-modification-requirements)
 
 ## Design Considerations
 
@@ -224,33 +229,23 @@ The following block diagram shows details on verification view of Caliptra Subsy
 
 ![alt text](./images/ValidationViewofSS.png)
 
-<!-- ## Caliptra Subsystem integration requirements (WIP)
-
-
-
-The following table describes Caliptra Subsystem integration requirements.
-
-| Block        | Requirement         | Definition of Done       |
-|-----------------|---------------------|--------------------------|
-| Caliptra Core   | [Caliptra Core Integration Requirements](https://github.com/chipsalliance/caliptra-rtl/blob/main/docs/CaliptraIntegrationSpecification.md#soc-integration-requirements) | Statement of conformance |
-| MCU | [MCU Integration Requirements (WIP)](#mcu-integration-requirements-wip) | Statement of conformance |
-| I3C | [I3C Integration Requirements](#i3c-integration-requirements) | Statement of conformance |
-| MCI | [MCI Integration Requirements](#MCI-Integration-Requirements) | Statement of conformance | MCI Integration requirement
-| LC Controller | [LC Integration Requirements](#lc-integration-requirements) | Statement of conformance |
-| Fuse Controller | [FC Integration Requirements](#fc-integration-requirements)| Statement of conformance | -->
-
 ## Memory Requirements
 
-Caliptra Subsystem required following memory export connected to various memories to function as per the specification.
+Integrators must instantiate SRAM components outside of the Caliptra Subsystem boundary (see [SRAM Implementation](#sram-implementation) for more details). SRAM wrapper logic within the Caliptra Subsystem boundary facilitates the connection to SRAM instances through memory export interfaces in the top-level port list. Integrators must connect the following memory export interfaces to the instantiated SRAM components.
+
+**SoC Specific** in below table means the size of the memory is not fixed and can be configured based on the design requirements by integrator. The actual size will depend on the specific implementation and configuration of the Caliptra Subsystem.
+
 | **Device** | **Memory Name**       | **Interface**                        | **Size** | **Access Type** | **Description**                                                                 |
   |---------------------|-----------------------|--------------------------------------|----------|-----------------|---------------------------------------------------------------------------------|
-  | **MCU0**            | Instruction ROM       | `mcu_rom_mem_export_if`              | TBD      | Read-Only       | Stores the instructions for MCU0 execution                                      |
-  | **MCU0**            | Memory Export         | `cptra_ss_mcu0_el2_mem_export`       | TBD      | Read/Write      | Memory export for MCU0 access                                                   |
-  | **MCU0**            | Shared Memory (SRAM)  | `cptra_ss_mci_mcu_sram_req_if`       | TBD      | Read/Write      | Shared memory between MCI and MCU for data storage                              |
-  | **MAILBOX**         | MBOX0 Memory          | `cptra_ss_mci_mbox0_sram_req_if`     | TBD      | Read/Write      | Memory for MBOX0 communication                                                  |
-  | **MAILBOX**         | MBOX1 Memory          | `cptra_ss_mci_mbox1_sram_req_if`     | TBD      | Read/Write      | Memory for MBOX1 communication                                                  |
-  | **Caliptra Core**   | ICCM, DCCM   | `cptra_ss_cptra_core_el2_mem_export` | TBD      | Read/Write      | Interface for the Instruction and Data Closely Coupled Memory (ICCM, DCCM) of the core |
-  | **Caliptra Core**   | IFU                   | `cptra_ss_mcu_rom_macro_req_if` | TBD      | Read-Only       | Interface for instruction fetch unit (IFU)                                      |
+  | **MCU0**            | Instruction ROM       | `mcu_rom_mem_export_if`              | SoC Specific                     | Read-Only             | Stores the instructions for MCU0 execution. Write-enable (we) and write-data (wdata) signals must be left unconnected, as MCU ROM has no write support. | 
+  | **MCU0**            | Memory Export         | `cptra_ss_mcu0_el2_mem_export`       | SoC Specific                     | Read/Write            | Memory export for MCU0 access                                                                                                                           |
+  | **MCU0**            | Shared Memory (SRAM)  | `cptra_ss_mci_mcu_sram_req_if`       | SoC Specific                     | Read/Write            | Shared memory between MCI and MCU for data storage                                                                                                      |
+  | **MAILBOX**         | MBOX0 Memory          | `cptra_ss_mci_mbox0_sram_req_if`     | SoC Specific                     | Read/Write            | Memory for MBOX0 communication                                                                                                                          |
+  | **MAILBOX**         | MBOX1 Memory          | `cptra_ss_mci_mbox1_sram_req_if`     | SoC Specific                     | Read/Write            | Memory for MBOX1 communication                                                                                                                          |
+  | **Caliptra Core**   | ICCM, DCCM            | `cptra_ss_cptra_core_el2_mem_export` | Refer to Caliptra Core spec      | Read/Write            | Interface for the Instruction and Data Closely Coupled Memory (ICCM, DCCM) of the core                                                                  |
+  | **Caliptra Core**   | Caliptra ROM          | `cptra_ss_cptra_core_imem`           | Refer to Caliptra Core spec      | Read-Only             | Interface for Caliptra ROM                                                                                                                              |
+  | **Caliptra Core**   | Caliptra Mailbox SRAM | `cptra_ss_cptra_core_mbox_sram`      | Refer to Caliptra Core spec      | Read/Write            | Interface for Caliptra mailbox memory                                                                                                                   |
+  | **Caliptra Core**   | Caliptra MLDSA SRAM   | `mldsa_memory_export_req`            | Refer to Caliptra Core spec      | Read/Write            | Interface for SRAM instantiated within Adams Bridge block                                                                                               |
 
 # Caliptra Subsystem Top
 
@@ -258,7 +253,7 @@ The integration of the Caliptra Subsystem begins with the instantiation of the t
 
 ## Parameters & Defines
 
-File at this path in the repository includes parameters and defines for Caliptra Subsystem `src/integration/rtl/caliptra_ss_includes.svh`
+File at this path in the repository includes parameters and defines for Caliptra Subsystem [src/integration/rtl/caliptra_ss_includes.svh](../src/integration/rtl/caliptra_ss_includes.svh)
 
 
 ## Interfaces & Signals
@@ -286,7 +281,7 @@ File at this path in the repository includes parameters and defines for Caliptra
 | External | input     | 32     | `cptra_ss_strap_generic_1_i`              | Generic strap input 1                    |
 | External | input     | 32     | `cptra_ss_strap_generic_2_i`              | Generic strap input 2                    |
 | External | input     | 32     | `cptra_ss_strap_generic_3_i`              | Generic strap input 3                    |
-| External | input     | 1      | `cptra_ss_debug_intent_i`                 | Physical presence bit required to initiate the debug unlock flow. For more details, refer to the [Production Debug Unlock Flow](CaliptraSSHardwareSpecification.md#production-debug-unlock-architecture) and [How does Caliptra Subsystem enable manufacturing debug mode?](#how-does-caliptra-subsystem-enable-manufacturing-debug-mode). For SOCs that choose to use these features, this port should be connected to a GPIO|
+| External | input     | 1      | `cptra_ss_debug_intent_i`                 | Physical presence bit required to initiate the debug unlock flow. For more details, refer to the [Production Debug Unlock Flow](CaliptraSSHardwareSpecification.md#production-debug-unlock-architecture) and [How does Caliptra Subsystem enable manufacturing debug mode?](CaliptraSSHardwareSpecification.md#how-does-caliptra-subsystem-enable-manufacturing-debug-mode). For SOCs that choose to use these features, this port should be connected to a GPIO|
 
 ### AXI Interface (axi_if)
 
@@ -336,7 +331,13 @@ File at this path in the repository includes parameters and defines for Caliptra
 | External | input     | 1     | `cptra_ss_rst_b_i`                   | Reset signal input, active low           |
 | External | input     | 1     | `cptra_ss_mci_cptra_rst_b_i`         | Reset signal input for Caliptra Core, active low. See [Caliptra Core Reset Control](#caliptra-core-reset-control) for more details          |
 | External | output    | 1     | `cptra_ss_mci_cptra_rst_b_o`         | Reset signal output from MCI for Caliptra Core, active low. See [Caliptra Core Reset Control](#caliptra-core-reset-control) for more details          |
+| External | input     | 1     | `cptra_ss_mcu_rst_b_i`         | Reset signal input for MCU, active low. See [MCU Reset Control](#mcu-reset-control) for more details          |
+| External | output    | 1     | `cptra_ss_mcu_rst_b_o`         | Reset signal output for MCU, active low. See [MCU Reset Control](#mcu-reset-control) for more details          |
+| External | output    | 1     | `cptra_ss_warm_reset_rdc_clk_dis_o`         | Clock disable for warm reset. Used to disable `cptra_ss_rdc_clk_cg_o` and `cptra_ss_mcu_clk_cg_o` clocks. Asserted a few clock cycles after `cptra_ss_rst_b_i` asserted and before `cptra_ss_rst_b_o` asserted. Deasserted a few clock cycles after `cptra_ss_rst_b_i` deasserted.    |
+| External | output    | 1     | `cptra_ss_early_warm_reset_warn_o`         | Early reset warn used to change security related signals to a safe value before reset is asserted. Needed since Caliptra Core clock gating is slightly after MCI clock gating/reset assertion. Example is the security_state fed from MCI to Caliptra Core. |
+| External | output    | 1     | `cptra_ss_mcu_fw_update_rdc_clk_dis_o`         | Clock disable for MCU reset. Used to disable `cptra_ss_mcu_clk_cg_o` clock. Asserted a few clock cycles before `cptra_ss_mcu_rst_b_o` is asserted. Deasserted when MCI boot sequencer switches out of `BOOT_RST_MCU` state.  |
 | External | output    | 1     | `cptra_ss_rdc_clk_cg_o`              | Caliptra subsystem clock gated clock for RDC. [Clock Control](#clock)         |
+| External | output    | 1     | `cptra_ss_mcu_clk_cg_o`              | MCU clock gated clock for RDC. [Clock Control](#clock)         |
 | External | output    | 1     | `cptra_ss_rst_b_o`                   | Caliptra subsystem reset aligned for RDC crossing [Reset Control](#reset)         |
 | External | axi_if    | na    | `cptra_ss_cptra_core_s_axi_if_w_sub`       | Caliptra core AXI write sub-interface          |
 | External | axi_if    | na    | `cptra_ss_cptra_core_s_axi_if_r_sub`       | Caliptra core AXI read sub-interface          |
@@ -344,14 +345,38 @@ File at this path in the repository includes parameters and defines for Caliptra
 | External | axi_if    | na    | `cptra_ss_cptra_core_m_axi_if_r_mgr`       | Caliptra core AXI read manager interface      |
 | External | axi_if    | na    | `cptra_ss_mci_s_axi_if_w_sub`              | Caliptra Subsystem MCI AXI write sub-interface |
 | External | axi_if    | na    | `cptra_ss_mci_s_axi_if_r_sub`              | Caliptra Subsystem MCI AXI read sub-interface |
-| External | axi_if    | na    | `cptra_ss_mcu_rom_s_axi_if_w_sub`          | Caliptra Subsystem MCU ROM AXI write sub-interface |
+| External | axi_if    | na    | `cptra_ss_mcu_rom_s_axi_if_w_sub`          | Caliptra Subsystem MCU ROM AXI write sub-interface. Writes to MCU ROM are not supported, this interface shall be left unconnected from AXI interconnect and tied to 0-value inputs. |
 | External | axi_if    | na    | `cptra_ss_mcu_rom_s_axi_if_r_sub`          | Caliptra Subsystem MCU ROM AXI read sub-interface |
 | External | axi_if    | na    | `cptra_ss_mcu_lsu_m_axi_if_w_mgr`          | Caliptra Subsystem MCU LSU AXI write manager interface |
+| External | Output    | 4     | `cptra_ss_mcu_lsu_m_axi_if_awcache`        | Caliptra Subsystem MCU LSU AXI write manager address transaction attributes signal |
+| External | Output    | 3     | `cptra_ss_mcu_lsu_m_axi_if_awprot`         | Caliptra Subsystem MCU LSU AXI write manager address protection type signal        |
+| External | Output    | 4     | `cptra_ss_mcu_lsu_m_axi_if_awregion`       | Caliptra Subsystem MCU LSU AXI write manager address region identifier signal      |
+| External | Output    | 4     | `cptra_ss_mcu_lsu_m_axi_if_awqos`          | Caliptra Subsystem MCU LSU AXI write manager address quality of service signal     |
 | External | axi_if    | na    | `cptra_ss_mcu_lsu_m_axi_if_r_mgr`          | Caliptra Subsystem MCU LSU AXI read manager interface |
-| External | axi_if    | na    | `cptra_ss_mcu_ifu_m_axi_if_w_mgr`          | Caliptra Subsystem MCU IFU AXI read manager interface |
+| External | Output    | 4     | `cptra_ss_mcu_lsu_m_axi_if_arcache`        | Caliptra Subsystem MCU LSU AXI read manager address transaction attributes signal |
+| External | Output    | 3     | `cptra_ss_mcu_lsu_m_axi_if_arprot`         | Caliptra Subsystem MCU LSU AXI read manager address protection type signal        |
+| External | Output    | 4     | `cptra_ss_mcu_lsu_m_axi_if_arregion`       | Caliptra Subsystem MCU LSU AXI read manager address region identifier signal      |
+| External | Output    | 4     | `cptra_ss_mcu_lsu_m_axi_if_arqos`          | Caliptra Subsystem MCU LSU AXI read manager address quality of service signal     |
+| External | axi_if    | na    | `cptra_ss_mcu_ifu_m_axi_if_w_mgr`          | Caliptra Subsystem MCU IFU AXI write manager interface |
+| External | Output    | 4     | `cptra_ss_mcu_ifu_m_axi_if_awcache`        | Caliptra Subsystem MCU IFU AXI write manager address transaction attributes signal |
+| External | Output    | 3     | `cptra_ss_mcu_ifu_m_axi_if_awprot`         | Caliptra Subsystem MCU IFU AXI write manager address protection type signal        |
+| External | Output    | 4     | `cptra_ss_mcu_ifu_m_axi_if_awregion`       | Caliptra Subsystem MCU IFU AXI write manager address region identifier signal      |
+| External | Output    | 4     | `cptra_ss_mcu_ifu_m_axi_if_awqos`          | Caliptra Subsystem MCU IFU AXI write manager address quality of service signal     |
 | External | axi_if    | na    | `cptra_ss_mcu_ifu_m_axi_if_r_mgr`          | Caliptra Subsystem MCU IFU AXI read manager interface |
-| External | axi_if    | na    | `cptra_ss_mcu_sb_m_axi_if_w_sub`              | Caliptra Subsystem MCU System Bus AXI write sub-interface |
-| External | axi_if    | na    | `cptra_ss_mcu_sb_m_axi_if_r_sub`              | Caliptra Subsystem MCU System Bus AXI read sub-interface |
+| External | Output    | 4     | `cptra_ss_mcu_ifu_m_axi_if_arcache`        | Caliptra Subsystem MCU IFU AXI read manager address transaction attributes signal |
+| External | Output    | 3     | `cptra_ss_mcu_ifu_m_axi_if_arprot`         | Caliptra Subsystem MCU IFU AXI read manager address protection type signal        |
+| External | Output    | 4     | `cptra_ss_mcu_ifu_m_axi_if_arregion`       | Caliptra Subsystem MCU IFU AXI read manager address region identifier signal      |
+| External | Output    | 4     | `cptra_ss_mcu_ifu_m_axi_if_arqos`          | Caliptra Subsystem MCU IFU AXI read manager address quality of service signal     |
+| External | axi_if    | na    | `cptra_ss_mcu_sb_m_axi_if_w_mgr`           | Caliptra Subsystem MCU System Bus AXI write manager interface |
+| External | Output    | 4     | `cptra_ss_mcu_sb_m_axi_if_awcache`        | Caliptra Subsystem MCU System Bus AXI write manager address transaction attributes signal |
+| External | Output    | 3     | `cptra_ss_mcu_sb_m_axi_if_awprot`         | Caliptra Subsystem MCU System Bus AXI write manager address protection type signal        |
+| External | Output    | 4     | `cptra_ss_mcu_sb_m_axi_if_awregion`       | Caliptra Subsystem MCU System Bus AXI write manager address region identifier signal      |
+| External | Output    | 4     | `cptra_ss_mcu_sb_m_axi_if_awqos`          | Caliptra Subsystem MCU System Bus AXI write manager address quality of service signal     |
+| External | axi_if    | na    | `cptra_ss_mcu_sb_m_axi_if_r_mgr`           | Caliptra Subsystem MCU System Bus AXI read manager interface |
+| External | Output    | 4     | `cptra_ss_mcu_sb_m_axi_if_arcache`        | Caliptra Subsystem MCU System Bus AXI read manager address transaction attributes signal |
+| External | Output    | 3     | `cptra_ss_mcu_sb_m_axi_if_arprot`         | Caliptra Subsystem MCU System Bus AXI read manager address protection type signal        |
+| External | Output    | 4     | `cptra_ss_mcu_sb_m_axi_if_arregion`       | Caliptra Subsystem MCU System Bus AXI read manager address region identifier signal      |
+| External | Output    | 4     | `cptra_ss_mcu_sb_m_axi_if_arqos`          | Caliptra Subsystem MCU System Bus AXI read manager address quality of service signal     |
 | External | axi_if    | na    | `cptra_ss_i3c_s_axi_if_w_sub`              | Caliptra Subsystem I3C AXI write sub-interface |
 | External | axi_if    | na    | `cptra_ss_i3c_s_axi_if_r_sub`              | Caliptra Subsystem I3C AXI read sub-interface |
 | External | input     | na    | `cptra_ss_lc_axi_wr_req_i`           | LC controller AXI write request input    |
@@ -378,7 +403,7 @@ File at this path in the repository includes parameters and defines for Caliptra
 | External | input     | na    | `cptra_ss_lc_ctrl_jtag_i`            | LC controller JTAG request input         |
 | External | output    | na    | `cptra_ss_lc_ctrl_jtag_o`            | LC controller JTAG response output       |
 | External | interface | na    | `cptra_ss_cptra_core_el2_mem_export` | Caliptra core EL2 memory export interface |
-| External | interface | na    | `mcu_rom_mem_export_if`              | MCU ROM memory export interface          |
+| External | interface | na    | `mcu_rom_mem_export_if`              | MCU ROM memory export interface. Write-enable (we) and write-data (wdata) signals must be left unconnected, as MCU ROM has no write support. |
 | External | output    | 1     | `cptra_ss_cptra_core_mbox_sram_cs_o` | Mailbox SRAM chip select output          |
 | External | output    | 1     | `cptra_ss_cptra_core_mbox_sram_we_o` | Mailbox SRAM write enable output         |
 | External | output    | `CPTRA_MBOX_ADDR_W` | `cptra_ss_cptra_core_mbox_sram_addr_o` | Mailbox SRAM address output |
@@ -401,8 +426,10 @@ File at this path in the repository includes parameters and defines for Caliptra
 | External | input     | 1     | `cptra_ss_mcu_no_rom_config_i`       | No ROM configuration input               |
 | External | input     | 1     | `cptra_ss_mci_boot_seq_brkpoint_i`   | MCI boot sequence breakpoint input       |
 | External | input     | 1     | `cptra_ss_lc_Allow_RMA_or_SCRAP_on_PPD_i`     | Allow RMA or SCRAP on PPD input                   |
-| External | input     | 1     | `cptra_ss_FIPS_ZEROIZATION_PPD_i`    | Zeroization request with PPD input       |
-| External | output     | na     | `caliptra_ss_life_cycle_steady_state_o`    | Life-cycle state broadcasted by fuse macro for any additional SOC specific use cases       |
+| External | input     | 1     | `cptra_ss_FIPS_ZEROIZATION_PPD_i`    | Zeroization request with PPD input. If FIPS zeroization flow is required, it shall be set before Caliptra SS is out of reset.       |
+| External | output    | 1     | `cptra_ss_dbg_manuf_enable_o`    | Indication that the debug is unlocked for manufacturing state and this is set by Caliptra Core        |
+| External | output    | 64    | `cptra_ss_cptra_core_soc_prod_dbg_unlock_level_o`    | Indication that the debug is unlocked for production state. Each bit represents a debug level. Currently, 8-bit is supported with Caliptra ROM |
+| External | output    | na     | `caliptra_ss_life_cycle_steady_state_o`    | Life-cycle state broadcasted by fuse macro for any additional SOC specific use cases       |
 | External | output    | 64    | `cptra_ss_mci_generic_output_wires_o` | Generic output wires for MCI            |
 | External | input     | 1     | `cptra_ss_mcu_jtag_tck_i`            | MCU JTAG clock input                     |
 | External | input     | 1     | `cptra_ss_mcu_jtag_tms_i`            | MCU JTAG TMS input                       |
@@ -416,10 +443,14 @@ File at this path in the repository includes parameters and defines for Caliptra
 | External | output    | 1     | `cptra_ss_i3c_sda_o`                 | I3C data output                          |
 | External | output    | 1     | `cptra_ss_i3c_scl_oe`                | I3C clock output enable                  |
 | External | output    | 1     | `cptra_ss_i3c_sda_oe`                | I3C data output  enable                  |
-| External | output    | 1     | `cptra_i3c_axi_user_id_filtering_enable_i` | I3C AXI user filtering enable (active high)     |
+| External | input     | 1     | `cptra_i3c_axi_user_id_filtering_enable_i` | I3C AXI user filtering enable (active high)     |
 | External | output    | 1     | `cptra_ss_sel_od_pp_o`               | Select open-drain push-pull output       |
 | External | inout     | 1     | `cptra_ss_i3c_scl_io`                | I3C clock bidirectional                  |
 | External | inout     | 1     | `cptra_ss_i3c_sda_io`                | I3C data bidirectional                   |
+| External | output    | 1     | `cptra_ss_i3c_recovery_payload_available_o`                | I3C indicates recovery payload is available. If there is no external I3C it should be looped back to `cptra_ss_i3c_recovery_payload_available_i`. If there is an external I3C it can be combined with or replaced with SOC logic and connected to `cptra_ss_i3c_recovery_payload_available_i`                  |
+| External | input     | 1     | `cptra_ss_i3c_recovery_payload_available_i`                | I3C indication for Caliptra Core that a recovery payload is available. If no external I3C should be connected to `cptra_ss_i3c_recovery_payload_available_o`. If external I3C it can be connected to a combination of SOC logic + `cptra_ss_i3c_recovery_payload_available_o`                  |
+| External | output    | 1     | `cptra_ss_i3c_recovery_image_activated_o`                | Indicates the recovery image is activated. If there is no external I3C it should be looped back to `cptra_ss_i3c_recovery_image_activated_i`. If there is an external I3C it can be combined with or replaced with SOC logic and connected to `cptra_ss_i3c_recovery_image_activated_i`                  |
+| External | input     | 1     | `cptra_ss_i3c_recovery_image_activated_i`                | I3C indication for Caliptra Core that the recovery image is activated. If no external I3C should be connected to `cptra_ss_i3c_recovery_image_activated_o`. If there is an external I3C it can be connected to a combination of SOC logic + `cptra_ss_i3c_recovery_image_activated_o`                  |
 | External | input     | 64    | `cptra_ss_cptra_core_generic_input_wires_i` | Generic input wires for Caliptra core |
 | External | input     | 1     | `cptra_ss_cptra_core_scan_mode_i`    | Caliptra core scan mode input            |
 | External | output    | 1     | `cptra_error_fatal`                  | Fatal error output                       |
@@ -434,15 +465,16 @@ File at this path in the repository includes parameters and defines for Caliptra
 
 ### Clock
 
-The `cptra_ss_clk_i` signal is the primary clock input for the Caliptra Subsystem. This signal must be connected to a 400 MHz system clock to ensure proper operation.
+The `cptra_ss_clk_i` signal is the primary clock input for the Caliptra Subsystem.
 
   - **Signal Name** `cptra_ss_clk_i`
-  - **Required Frequency** 400 MHz
+  - **Required Frequency** 170 Mhz to 400 MHz
+    - I3C core imposes requirement for minimum operating clock frequency set to 170 Mhz or higher.
   - **Clock Source** Must be derived from the SoC’s clock generation module or a stable external oscillator.
   - **Integration Notes**
-     1. Verify that the SoC or system-level clock source provides a stable 400 MHz clock.
+     1. Verify that the SoC or system-level clock source provides a stable clock.
      2. The clock signal must be properly buffered if necessary to meet the subsystem's setup and hold timing requirements.
-     3. If a different frequency is required, ensure that a clock divider or PLL is used to generate the 400 MHz clock before connection.
+     3. If a different frequency is required, ensure that a clock divider or PLL is used to generate clock before connection.
 
 The `cptra_ss_rdc_clk_cg_o` output clock is a clock gated version of `cptra_ss_clk_i`. It is clock gated whenever `cptra_ss_rst_b` is asserted to avoid RDC issues from the warm reset domain to the cold reset domain/memories.
 
@@ -450,24 +482,36 @@ The `cptra_ss_rdc_clk_cg_o` output clock is a clock gated version of `cptra_ss_c
   - **Required Frequency** Same as `cptra_ss_clk_i`.
   - **Clock Source** Caliptra SS MCI clock gater
   - **Integration Notes**
-     1. MCU SRAM and MCU MBOX memories shall be connected to this clock to avoid RDC issues.
-     2. Clock shall be paired with `cptra_ss_rst_b_o` to properly avoid RDC issues.
+     1. Gated a few clock cycles before `cptra_ss_rst_b_o` asserted and remains gated until reset is deasserted.
+     2. MCU SRAM and MCU MBOX memories shall be connected to this clock to avoid RDC issues.
+     3. Clock gating controlled by `cptra_ss_warm_reset_rdc_clk_dis_o`.
+     4. Any SOC logic on a deeper reset domain than CSS can use this clock to resolve RDC issues.
+
+The `cptra_ss_mcu_clk_cg_o` output clock is a gated version of `cptra_ss_clk_i`. It is gated whenever `cptra_ss_mcu_rst_b_o` is asserted to avoid RDC issues within the MCU warm and cold reset domains. 
+  
+  - **Signal Name** `cptra_ss_mcu_clk_cg_o`
+  - **Required Frequency** Same as `cptra_ss_clk_i`.
+  - **Clock Source** Caliptra SS MCI clock gater
+  - **Integration Notes**
+     1. Gated a few clock cycles before `cptra_ss_mcu_rst_b_o` asserted and remains gated until reset is deasserted.
+     2. Clock gating controlled by `cptra_ss_mcu_fw_update_rdc_clk_dis_o` and `cptra_ss_warm_reset_rdc_clk_dis_o`.
+     3. Any SOC logic on a deeper reset domain than MCU can use this clock to resolve RDC issues.
 
 ### Reset
 
-The `cptra_ss_reset_n` signal is the primary reset input for the Caliptra Subsystem. It must be asserted low to reset the subsystem and de-asserted high to release it from reset. Ensure that the reset is held low for a sufficient duration (minimum of 2 clock cycles at 400 MHz) to allow all internal logic to initialize properly.
+The `cptra_ss_rst_b_i` signal is the primary reset input for the Caliptra Subsystem. It must be asserted low to reset the subsystem and de-asserted high to release it from reset. Ensure that the reset is held low for a sufficient duration (minimum of 2 clock cycles) to allow all internal logic to initialize properly.
 
-   - **Signal Name** `cptra_ss_reset_n`
+   - **Signal Name** `cptra_ss_rst_b_i`
    - **Active Level** Active-low (`0` resets the subsystem, `1` releases reset)
    - **Reset Type** Synchronous with the `cptra_ss_clk_i` signal
    - **Integration Notes**
-     - The reset signal must be synchronized to the 400 MHz `cptra_ss_clk_i` clock to prevent metastability issues.
+     - The reset signal must be synchronized to the `cptra_ss_clk_i` clock to prevent metastability issues.
      - If the reset source is asynchronous, a synchronizer circuit must be used before connecting to the subsystem.
      - During SoC initialization, assert this reset signal until all subsystem clocks and required power domains are stable.
-     - It is **illegal** to only toggle `cptra_ss_reset_n` until both Caliptra and MCU have received at least one FW update. Failure to follow this requirement could cause them to execute out of an uninitialized SRAM.
-     - SOC shall toggle `cptra_ss_reset_b` only after `cptra_ss_mcu_halt_status_o` is asserted to guarantee MCU is idle and to prevent any RDC issues.
+     - It is **illegal** to only toggle `cptra_ss_rst_b_i` until both Caliptra and MCU have received at least one FW update. Failure to follow this requirement could cause them to execute out of an uninitialized SRAM.
+     - SOC should assert `cptra_ss_reset_b_i` after `cptra_ss_mcu_halt_status_o` is asserted to guarantee MCU is idle. This will guarantee no outstanding AXI transactions from MCU and help avoid RDC issues.  
 
-The `cptra_ss_rst_b_o` is a delayed version of `cptra_ss_reset_n` to ensure `cptra_ss_rdc_clk_cg_o` is gated before reset is asserted. This reset is needed for the purpose of RDC between the warm reset domain and the cold reset/memory domain.
+The `cptra_ss_rst_b_o` is a delayed version of `cptra_ss_rst_b_i` to ensure `cptra_ss_rdc_clk_cg_o` is gated before reset is asserted. This reset is needed for the purpose of RDC between the warm reset domain and the cold reset/memory domain.
 
    - **Signal Name** `cptra_ss_rst_b_o`
    - **Active Level** Active-low (`0` resets the subsystem, `1` releases reset)
@@ -475,7 +519,7 @@ The `cptra_ss_rst_b_o` is a delayed version of `cptra_ss_reset_n` to ensure `cpt
    - **Integration Notes**
      1. SOCs shall use this reset for any memory logic connected to MCU SRAM or MCU MBOX to avoid RDC corruption of the memories.
      2. It is recommended to be used for SOC AXI interconnect if it is on the same reset domain as Caliptra SS to avoid RDC issues.
-     3. Logic shall be paired with `cptra_ss_rdc_clk_cg_o` to avoid RDC issues.
+     3. SOC logic on `cptra_ss_rst_b_i` domain and transitions into a deeper reset domain can use this reset paired with `cptra_ss_rdc_clk_cg_o` to avoid RDC issues.
 
 ### Power Good Signal
 
@@ -493,16 +537,36 @@ The `cptra_ss_pwrgood_i` signal serves as an indicator of stable power for the C
 
 ### Connecting AXI Interconnect
 
-Integrator must connect, following list of manager and subordinates to axi interconnect.
+Integrator must connect following list of manager and subordinates to axi interconnect.
 
-- List of Manager connections to AXI interconnect.
+- List of AXI Manager connections to AXI interconnect.
 
   | Manager AXI If Name           | Description                                                       |
   |-------------------------------|-------------------------------------------------------------------|
-  | `cptra_ss_mcu_lsu_m_axi_if`   | Manager interface for MCU Load/Store Unit (LSU)                   |
-  | `cptra_ss_mcu_ifu_m_axi_if`   | Manager interface for MCU Instruction Fetch Unit (IFU)            |
-  | `cptra_ss_mci_m_axi_if`       | Manager interface for Manufacturer Control Interface (for MCU) (MCI)           |
-  | `cptra_ss_cptra_core_m_axi_if`| Manager interface for the Caliptra Core AXI transactions          |
+  | `cptra_ss_mcu_lsu_m_axi_if`   | Manager interface for MCU Load/Store Unit (LSU). All additional AXI signals present in the top-level port list that are not part of the axi_if interface must also be connected to the AXI interconnect (AxCACHE, AxPROT, AxREGION, AxQOS).                   |
+  | `cptra_ss_mcu_ifu_m_axi_if`   | Manager interface for MCU Instruction Fetch Unit (IFU). All additional AXI signals present in the top-level port list that are not part of the axi_if interface must also be connected to the AXI interconnect (AxCACHE, AxPROT, AxREGION, AxQOS).            |
+  | `cptra_ss_mcu_sb_m_axi_if`    | Manager interface for MCU System Bus (SB). Used for debug only. All additional AXI signals present in the top-level port list that are not part of the axi_if interface must also be connected to the AXI interconnect (AxCACHE, AxPROT, AxREGION, AxQOS).    |
+  | `cptra_ss_cptra_core_m_axi_if`| Manager interface for the Caliptra Core AXI transactions. Additional signals are unused and may be tied to 0 at the interconnect (AxCACHE, AxPROT, AxREGION, AxQOS).           |
+
+- AXI USER width is 32-bits for all AXI interfaces in the Caliptra Subsystem. Only the Address User signals are used (ARUSER and AWUSER) for secure access filtering. Other USER signals are either tied to 0 or not used (WUSER, RUSER, BUSER). ARUSER and AWUSER must be passed unmodified through the AXI interconnect to all AXI subordinates in the Subsystem. Each logic block inside the Subsystem is responsible for performing its own AXI User filtering based on access privileges. AXI interconnect is only responsible for passing the unmodified signals along with the transaction requests, not for performing any access filtering.
+
+- AXI ID width at each MCU manager interface must not be modified from the configured values. ID width for each of the MCU AXI Manager interfaces is defined by the <IF_NAME>_BUS_TAG parameter from this file: [css_mcu0_el2_param.vh](https://github.com/chipsalliance/caliptra-ss/blob/main/src/riscv_core/veer_el2/rtl/defines/css_mcu0_el2_param.vh). Port connections may be seen in [mcu_top.sv](https://github.com/chipsalliance/caliptra-ss/blob/main/src/mcu/rtl/mcu_top.sv). ID Width of the Caliptra DMA AXI Manager interface is defined in [soc_ifc_pkg.sv](../third_party/caliptra-rtl/src/soc_ifc/rtl/soc_ifc_pkg.sv).
+  * IFU_BUS_TAG: 3. Interconnect should support ID values 0-7.
+  * LSU_BUS_TAG: 3. Interconnect should support ID values 0-7.
+  * SB_BUS_TAG: 1. Interconnect should support ID values 0,1.
+  * CPTRA_AXI_DMA_ID_WIDTH: 5. ID signals are tied to constant 0.
+
+- For each AXI subordinate interface in the Subsystem the following table shows ID WIDTH default value, file to review for the configured definition, and any support for configurability.
+  | Interface | Default ID WIDTH | Reference File                   | Description |
+  |-----------|------------------|----------------------------------|----------------------------------------------------------------|
+  | cptra_ss_cptra_core_s_axi_if | 8 | [config_defines.svh](../third_party/caliptra-rtl/src/integration/rtl/config_defines.svh) | Default value of 8 is controlled using the macro `CALIPTRA_AXI_ID_WIDTH`. |
+  | cptra_ss_mcu_rom_s_axi_if | 8 | [config_defines.svh](../third_party/caliptra-rtl/src/integration/rtl/config_defines.svh) | Default value of 8 is controlled using the macro `CALIPTRA_AXI_ID_WIDTH`. |
+  | cptra_ss_mci_s_axi_if | 8 | [caliptra_ss_top.sv](../src/integration/rtl/caliptra_ss_top.sv) | ID_WIDTH value is derived from the width of AxID signals in the connected AXI interface. |
+  | cptra_ss_i3c_s_axi_if | 8 | [i3c_defines.svh](../third_party/i3c-core/src/i3c_defines.svh) | Default value of 8 is controlled using the macro `AXI_ID_WIDTH`. |
+  | cptra_ss_lc_axi_wr, cptra_ss_lc_axi_rd | 8 | src/tlul/rtl/tlul_pkg.sv | Default value is derived from the macro `CALIPTRA_AXI_ID_WIDTH`, overrideable using the macro `CALIPTRA_SS_TLUL_AXI_ID_WIDTH`. |
+  | cptra_ss_otp_core_axi_wr, cptra_ss_otp_core_axi_rd | 8 | src/tlul/rtl/tlul_pkg.sv | Default value is derived from the macro `CALIPTRA_AXI_ID_WIDTH`, overrideable using the macro `CALIPTRA_SS_TLUL_AXI_ID_WIDTH`. |
+
+- AXI subordinates in the Subsystem may accept up to 2 Read and 2 Write requests in total, but each request is serviced in order and responses are provided in order. Integrators may configure the interconnect to issue 1 or 2 outstanding transactions, but are recommended to configure only a single outstanding request at a time for area (buffer) optimizations in the interconnect and because there is no significant performance improvement by queueing multiple requests.
 
 - Subordinate Address Map requirements
   - The MCU is configured with several internal address assignments that must not be used when assigning SOC addresses for AXI subordinates on the AXI interconnect. The following table shows these restricted regions:
@@ -516,21 +580,20 @@ Integrator must connect, following list of manager and subordinates to axi inter
 
   - The following address map is a **suggested address** map for subordinates for the subsystem design. It details the memory layout and the connections between different components within the Caliptra subsystem.
 
-    | Start Address    | End Address      | Subordinate | Name        | Description                |
-    |------------------|------------------|-------|-------------------|---------------------------|
-    | 64'h1000_0000    | 64'h1000_FFFF    | 0     | imem              | MCU Instruction memory    |
-    | 64'h2000_4000    | 64'h2000_4FFF    | 1     | I3c               | I3C Core                  |
-    | 64'h8000_0000    | 64'h80FF_FFFF    | 2     | n/a               | Reserved                  |
-    | 64'h3000_0000    | 64'h3FFF_FFFF    | 3     | SoC IFC (tb)      | SoC / Testbench           |
-    | 64'h2100_0000    | 64'h2200_0000    | 4     | MCI               | Manufacturer Control Interface (for MCU) |
-    | 64'h7000_0000    | 64'h7000_01FF    | 5     | Fuse Ctrl         | Fuse Controller           |
-    | 64'h7000_0200    | 64'h7000_03FF    | 6     | Fuse Ctrl Core    | Fuse Controller Core      |
-    | 64'h7000_0400    | 64'h7000_05FF    | 7     | Life Cycle Ctrl   | Life Cycle Controller     |
+    | Start Address    | End Address      | Address Width | Subordinate | Name              | Description               |
+    |------------------|------------------|---------------|-------------|-------------------|---------------------------|
+    | 64'h1000_0000    | 64'h1FFF_FFFF    | -             | 0           | n/a               | Reserved    |
+    | 64'h2000_4000    | 64'h2000_4FFF    | 12            | 1           | I3c               | I3C Core                  |
+    | 64'h8000_0000    | 64'h80FF_FFFF    | 24            | 2           | MCU ROM           | MCU ROM                  |
+    | 64'hA002_0000    | 64'hA003_FFFF    | 17            | 3           | SoC IFC           | Caliptra Core AXI subordinate interface |
+    | 64'h2100_0000    | 64'h21DF_FFFF    | 24            | 4           | MCI               | Manufacturer Control Interface (for MCU) |
+    | 64'h7000_0000    | 64'h7000_01FF    | 9             | 5           | Fuse Ctrl         | Fuse Controller           |
+    | 64'h7000_0400    | 64'h7000_05FF    | 9             | 6           | Life Cycle Ctrl   | Life Cycle Controller     |
 
 - Following are the header files path for the below suggested address map. These files would be useful in defining the address map using the given RDL Files.
 
-  - `caliptra-ss\src\integration\rtl\soc_address_map.h`
-  - `caliptra-ss\src\integration\rtl\soc_address_map_defines.svh `
+  - [soc_address_map.h](../src/integration/rtl/soc_address_map.h)
+  - [soc_address_map_defines.svh](../src/integration/rtl/soc_address_map_defines.svh)
 
 ### Caliptra Subsystem Reference Register Map
 
@@ -556,6 +619,18 @@ If an SOC wants to modify Caliptra reset they can do so by adding additional log
 
 **NOTE**: Caliptra SS RDC and CDC are only evaluated when the MCI control is looped back to Caliptra. Any modification to this reset control requires a full RDC and CDC analysis done by the SOC integration team.
 
+### MCU Reset Control
+
+Typically MCU reset is directly controlled by MCI. This means `cptra_ss_mcu_rst_b_o` is directly looped back to  `cptra_ss_mcu_rst_b_i`.
+
+The SOC can choose to delay the MCU reset deassertion. The SOC should be aware that MCU clock enable is based off `cptra_ss_mcu_rst_b_o`.
+
+If the SOC wants to delay assertion of MCU reset this can be done, but integrators need to be aware the MCU reset counter (`MIN_MCU_RST_COUNTER_WIDTH`) starts counting when `cptra_ss_mcu_rst_b_i` asserts. Meaning MCU could be in reset for shorter than expected. To resolve this issue the SOC should implement their own reset counter to delay the reset deassertion. 
+
+Arbitrary reset assertions/deassertions should not be done unless the integrator understands exactly what they are doing. This can cause RDC issues within Caliptra SS.
+
+**NOTE**: Caliptra SS RDC and CDC are only evaluated when MCU reset is looped back. Any modification to this reset control requires a full RDC and CDC analysis done by the SOC integration team.
+
 ## SRAM implementation
 
 ### Overview
@@ -567,7 +642,7 @@ SRAMs are instantiated at the SoC level. Caliptra Subsystem provides the interfa
 
 SRAM repair logic (for example, BIST) and its associated fuses, which is proprietary to companies and their methodologies, is implemented external to the Caliptra Subsystem boundary.
 
-SRAMs must NOT go through BIST or repair flows across a “warm reset”. SoC shall perform SRAM repair during a powergood cycling event ("cold reset") and only prior to deasserting `cptra_ss_rst_b_i`. During powergood cycling events, SoC shall also initialize all entries in the SRAM to a 0 value, prior to deasserting `cptra_ss_rst_b_i`.
+SRAMs must NOT go through BIST or repair flows across a “warm reset”. SoC shall perform SRAM repair during a powergood cycling event ("cold reset") and only prior to deasserting `cptra_ss_rst_b_i`. During powergood cycling events, SoC shall also initialize all entries in the SRAM to a 0 value prior to deasserting `cptra_ss_rst_b_i`. This requirement can not be completed by MCU (or any other components in Subsystem) because it is a function of the proprietary SRAM management logic.
 
 MCU mailbox and executable SRAMs are implemented with ECC protection. Data width for the mailbox is 32-bits, with 7 parity bits for a Hamming-based SECDED (single-bit error correction and double-bit error detection).
 
@@ -592,7 +667,7 @@ The following figure shows the SRAM interface timing.
 
 ### SRAM parameterization
 
-Parameterization for ICCM/DCCM/I-Cache memories is derived from the configuration of the VeeR RISC-V core that has been selected for Caliptra Subsystem integration. Parameters defined in the VeeR core determine signal dimensions at the Subsystem top-level interface and drive requirements for SRAM layout. For details about interface parameterization, see the [Interfaces \& Signals](#interfaces--signals) section. 
+Parameterization for ICCM/DCCM/I-Cache memories is derived from the configuration of the VeeR RISC-V core that has been selected for Caliptra Subsystem integration. Parameters defined in the VeeR core determine signal dimensions at the Subsystem top-level interface and drive requirements for SRAM layout. For details about interface parameterization, see the [Interfaces \& Signals](#interfaces--signals) section.
 
 ### Example SRAM machine check reliability integration
 
@@ -633,27 +708,11 @@ Note that the example assumes that data and ECC codes are in non-deterministic b
     2. The non-intrusive error injection does not interfere with the operation of memories.
     3. The non-intrusive error injection is functional in Production fused parts.
 
-#### Caliptra Subsystem error and recovery flow
+#### Caliptra Subsystem error handling flow
 
-1. Caliptra Subsystem Stuck:
-    1. SoC BC timeout mechanism with 300us timeout.
-2. Caliptra Subsystem reports non-fatal error during boot flow:
-    1. `cptra_ss_all_error_non_fatal_o` is an output Caliptra Subsystem signal, which shall be routed to SoC interrupt controller.
-    2. See [MCI error handling](https://github.com/chipsalliance/caliptra-ss/blob/main/docs/CaliptraSSHardwareSpecification.md#mci-error-handling) for more details on MCI error infrastructure.
-    3. SoC can read the MCI non-fatal error register for error source.
-    4. Assume Caliptra Subsystem can report a non-fatal error at any time.
-    5. SoC should monitor the error interrupt or check it before requesting any Subsystem operations.
-    6. In the event of a non-fatal error during boot, SoC should enter recovery flow and attempt to boot again using alternate boot part/partition.
-    7. If SoC sees that a non-fatal error has occurred AFTER initial bringup, SoC may attempt to recover Caliptra by executing the “Run Self-Test” mailbox command (not yet defined).
-    8. If this command completes successfully, SoC may continue using Caliptra as before.
-    9. If this command is unsuccessful, Caliptra is in an error state for the remainder of the current boot.
-    10. SoC needs to monitor MCRIP for non-fatal ECC errors that are not reported by Caliptra Subsystem.
-3. Caliptra Subsystem reports fatal error during boot flow:
-    1. `cptra_ss_all_error_fatal_o` is an output Caliptra Subsystem signal, which shall be routed to SoC interrupt controller.
-    2. SoC can read the MCI fatal error register for error source.
-    3. Assume Caliptra Subsystem can report a fatal error at any time.
-    4. Fatal errors are generally hardware in nature. SoC may attempt to recover by full reset of the entire SoC. If SoC continues without a full reset Caliptra Subsystem will be unavailable for the remainder of the current boot.
-    5. In the event of an uncorrectable error that is not correctly detected by Caliptra Subsystem, ECC fatal errors shall be reported by SoC MCRIP.
+1. Any implementation of error and recovery flows must adhere to the error handling requirements specified in [Caliptra.md](https://github.com/chipsalliance/Caliptra/blob/main/doc/Caliptra.md#error-reporting-and-handling)
+2. See [MCI error handling](https://github.com/chipsalliance/caliptra-ss/blob/main/docs/CaliptraSSHardwareSpecification.md#mci-error-handling) for more details on MCI error infrastructure and error handling in Caliptra Subsystem.
+3. SoC level reporting and handling of fatal & non-fatal errors is product-specific architecture, outside the scope of Caliptra Subsystem definition. For example, a CPU and a PCIe device may handle fatal and non-fatal errors differently.
 
 
 ## Programming interface
@@ -662,11 +721,11 @@ There are two primary programming avenues to interface with the Caliptra Subsyst
 
 1. **MCU Firmware**
    - **Description**: This method involves programming the Microcontroller Unit (MCU) to execute firmware.
-   - **Details**: For more information on how to program the MCU and execute firmware via the MCU, please refer to the [MCU Programming Interface](#) documentation.
+   - **Details**: For more information on how to program the MCU and execute firmware via the MCU, please refer to the [MCU Programming Interface](#mcu-programming-interface) documentation.
 
 2. **Caliptra Firmware**
    - **Description**: This method involves programming the Caliptra Core to execute firmware.
-   - **Details**: For more information on how to program and execute Caliptra Core firmware, please refer to the [Caliptra Programming Interface](#) documentation.
+   - **Details**: For more information on how to program and execute Caliptra Core firmware, please refer to the [Caliptra Core References and Related Specifications](https://github.com/chipsalliance/caliptra-rtl/blob/main/docs/CaliptraIntegrationSpecification.md#references-and-related-specifications).
 
 ## Sequences
 
@@ -683,8 +742,9 @@ Reference tests are available at `caliptra-ss\src\integration\test_suites`
 | `MCU_CPTRA_BRINGUP`            | Tests the bring-up sequence of the MCU in the Caliptra Subsystem.           |
 | `MCU_DCCM_ACCESS`              | Validates access to the Data Closely Coupled Memory (DCCM) by the MCU.      |
 | `MCU_FUSE_CTRL_BRINGUP`        | Tests the bring-up sequence of the Fuse Controller by the MCU.              |
-| `MCU_LMEM_EXE`                 | Tests execution from the Local Memory (LMEM) by the MCU.                    |
-| `I3C_SMOKE`                    | Performs basic smoke tests on the I3C interface to ensure proper functionality. |
+| `MCU_LMEM_EXE`                 | Tests execution by MCU from the MCU SRAM, contained inside the MCI component. LMEM refers to Local Memory, a generic alias for MCU SRAM. |
+| `MCU_MCTP_SMOKE_TEST`          | Test verifies the I3C main target operation                                 |
+| `MCU_TEST_ROM_I3C_STREAMING_BOOT` | Test verifies the I3C recovery target operation by using caliptra test ROM |
 | `FUSE_PROV_WITH_LC_CTRL`       | Tests fuse provisioning in conjunction with the Lifecycle Controller.       |
 | `CALIPTRA_SS_LC_CTRL_BRINGUP`  | Tests the bring-up sequence of the Lifecycle Controller.                    |
 | `CALIPTRA_SS_LC_CTRL_ST_TRANS` | Validates state transitions of the Lifecycle Controller.                    |
@@ -792,10 +852,20 @@ For an in-depth understanding of the Fuse Controller's functionality, including 
 | Internal   | Output     | Struct  | `otp_broadcast_o`             |                                   | FUSE broadcast output to Caliptra Core. This port broadcasts UDS-seed and Field-entropy-seed.    |
 
 
-## Memory Map	/ Address map
+## Fuse Macro Memory Map and Fuse Controller CSR Address Map
+
+The Caliptra Subsystem fuse controller supports a flexible and extensible memory map for storing one-time programmable (OTP) data. This structure is documented in the following files:
+See [Fuse Controller Register Map](../src/fuse_ctrl/doc/otp_ctrl_registers.md) for registers.
+See [Fuse Macor Memory Map](../src/fuse_ctrl/doc/otp_ctrl_mmap.md) for fuse partition map.
+
+The current fuse memory map consists of **three main architectural segments**: **Caliptra-Core** (prefix: `CALIPTRA_CORE`), **Caliptra-Subsystem** (prefix: `CALIPTRA_SS`), **SoC/Vendor-Specific**.
+
+This structure enables separation of responsibilities and flexibility in SoC integration. While the **Caliptra-Core fuse items** are mandatory and must adhere to the [Caliptra Fuse Map Specification](https://github.com/chipsalliance/Caliptra/blob/main/doc/Caliptra.md#fuse-map), **Caliptra-Subsystem** fuses are required only when the subsystem is instantiated with Caliptra Subsystem. These Caliptra Subsystem fuses can also be configured based on SoC requirements. The **SoC/Vendor-specific** items can be customized based on integrator needs and product requirements. Therefore, the fields under SoC-specific categories can be resized or eliminated if unused.
 
 
-See [Fuse Controller Register Map](../src/fuse_ctrl/doc/registers.md).
+### **SOC_SPECIFIC_IDEVID_CERTIFICATE Usage**
+This field defaults to 4 bytes but can be extended to accommodate storage of a full IDevID hybrid certificate (e.g., ML-DSA + ECC) if desired. Integrators must adjust its size in the YAML config used by the generation script.
+
 
 ---
 
@@ -825,6 +895,7 @@ See [Fuse Controller Register Map](../src/fuse_ctrl/doc/registers.md).
      `**::u_otp_ctrl::u_part_buf::u_otp_ctrl_ecc_reg::gen_partitions[X]::gen_buffered::u_part_buf::u_otp_ctrl_ecc_reg::**`, for all values of `X` in 1–5,
      since indices 1–5 map to the sensitive partitions mentioned above (defined in the `PartInfo` localparam in `otp_ctrl_part_pkg.sv`, autogenerated from the OTP memory map HJSON).
      Additionally, these secrets are broadcasted with this input port: `otp_broadcast_o`. Therefore, this port, its propagated signals, and its driver signals must also not be scannable.
+  - Since Fuse Controller scrambles secret partition with PRESENT chipher, this chiper keys, autogenerated from the OTP memory map HJSON, must be excluded from the scan path. Although these values are parameters defined in `otp_ctrl_part_pkg.sv`, the registers driven by these parameters must be excluded from the scan path.
   - Note, the LC token partitions are not considered secret as only the cSHAKE128 hashes of each token are stored, not the raw tokens themselves.
 
 ---
@@ -834,29 +905,27 @@ Fuse macros has to be programmed via the Direct Access Interface, which is compr
 
 CSR Name                             | Description
 -------------------------------------|------------------------------------
-[`DIRECT_ACCESS_WDATA_0`](../src/fuse_ctrl/doc/registers.md#direct_access_wdata) | Low 32bit word to be written.
-[`DIRECT_ACCESS_WDATA_1`](../src/fuse_ctrl/doc/registers.md#direct_access_wdata) | High 32bit word to be written.
-[`DIRECT_ACCESS_RDATA_0`](../src/fuse_ctrl/doc/registers.md#direct_access_rdata) | Low 32bit word that has been read.
-[`DIRECT_ACCESS_RDATA_1`](../src/fuse_ctrl/doc/registers.md#direct_access_rdata) | High 32bit word that has been read.
-[`DIRECT_ACCESS_ADDRESS`](../src/fuse_ctrl/doc/registers.md#direct_access_address) | byte address for the access.
-[`DIRECT_ACCESS_CMD`](../src/fuse_ctrl/doc/registers.md#direct_access_cmd)     | Command register to trigger a read or a write access.
-[`DIRECT_ACCESS_REGWEN`](../src/fuse_ctrl/doc/registers.md#direct_access_regwen)  | Write protection register for DAI.
+[`DIRECT_ACCESS_WDATA_0`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_wdata) | Low 32bit word to be written.
+[`DIRECT_ACCESS_WDATA_1`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_wdata) | High 32bit word to be written.
+[`DIRECT_ACCESS_RDATA_0`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_rdata) | Low 32bit word that has been read.
+[`DIRECT_ACCESS_RDATA_1`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_rdata) | High 32bit word that has been read.
+[`DIRECT_ACCESS_ADDRESS`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_address) | byte address for the access.
+[`DIRECT_ACCESS_CMD`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_cmd)     | Command register to trigger a read or a write access.
+[`DIRECT_ACCESS_REGWEN`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_regwen)  | Write protection register for DAI.
 
 ## Initialization
 
 The OTP controller initializes automatically upon power-up and is fully operational by the time the processor boots.
 The only initialization steps that SW should perform are:
 
-1. Check that the OTP controller has successfully initialized by reading [`STATUS`](../src/fuse_ctrl/doc/registers.md#status). I.e., make sure that none of the ERROR bits are set, and that the DAI is idle ([`STATUS.DAI_IDLE`](../src/fuse_ctrl/doc/registers.md#status)).
-    - Choose whether the periodic [background checks](#partition-checks) shall be subject to a timeout by programming a nonzero timeout cycle count to [`CHECK_TIMEOUT`](registers.md#check_timeout).
-      In this case, the [`CHECK_TIMEOUT`](registers.md#check_timeout) register must be set before the [`INTEGRITY_CHECK_PERIOD`](registers.md#integrity_check_period) and [`CONSISTENCY_CHECK_PERIOD`](registers.md#consistency_check_period) registers (see next point).
-    - Enable periodic [background checks](#partition-checks) by programming nonzero mask values to [`INTEGRITY_CHECK_PERIOD`](registers.md#integrity_check_period) and [`CONSISTENCY_CHECK_PERIOD`](registers.md#consistency_check_period).
-    - It is recommended to lock down the background check registers via [`CHECK_REGWEN`](registers.md#check_regwen), once the background checks have been set up
+1. Check that the OTP controller has successfully initialized by reading [`STATUS`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#status). I.e., make sure that none of the ERROR bits are set, and that the DAI is idle ([`STATUS.DAI_IDLE`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#status)).
+    - Choose whether the periodic background checks shall be subject to a timeout by programming a nonzero timeout cycle count to [`CHECK_TIMEOUT`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#check_timeout).
+      In this case, the [`CHECK_TIMEOUT`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#check_timeout) register must be set before the [`INTEGRITY_CHECK_PERIOD`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#integrity_check_period) and [`CONSISTENCY_CHECK_PERIOD`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#consistency_check_period) registers (see next point).
+    - Enable periodic background checks by programming nonzero mask values to [`INTEGRITY_CHECK_PERIOD`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#integrity_check_period) and [`CONSISTENCY_CHECK_PERIOD`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#consistency_check_period).
+    - It is recommended to lock down the background check registers via [`CHECK_REGWEN`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#check_regwen), once the background checks have been set up
 
 If needed, one-off integrity and consistency checks can be triggered via [`CHECK_TRIGGER`](../src/fuse_ctrl/doc/registers.md#check_trigger).
 If this functionality is not needed, it is recommended to lock down the trigger register via [`CHECK_TRIGGER_REGWEN`](../src/fuse_ctrl/doc/registers.md#check_trigger_regwen).
-
-Later on during the boot process, SW may also choose to block read access to the SW managed partitions via the associated partition lock registers, e.g. [`CREATOR_SW_CFG_READ_LOCK`](../src/fuse_ctrl/doc/registers.md#creator_sw_cfg_read_lock) or [`OWNER_SW_CFG_READ_LOCK`](../src/fuse_ctrl/doc/registers.md#owner_sw_cfg_read_lock).
 
 ## Programming interface
 The Fuse Controller (FC) programming interface is designed to manage lifecycle states, handle fuses with ECC support, and ensure secure interactions with the fuse macros. A key component in this architecture is the Fuse Controller Filter RTL. This module intercepts and verifies the fuse programming sequence by checking that all parts of the transaction originate from the same authorized source. In doing so, the filter guarantees that fuse provisioning is performed in an atomic manner.
@@ -898,18 +967,18 @@ Below are the key operations supported by the programming interface:
 
 A typical readout sequence looks as follows:
 
-  - Check whether the DAI is idle by reading the [`STATUS`](../src/fuse_ctrl/doc/registers.md#status) register.
-  - Write the byte address for the access to [`DIRECT_ACCESS_ADDRESS`](../src/fuse_ctrl/doc/registers.md#direct_access_address).
+  - Check whether the DAI is idle by reading the [`STATUS`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#status) register.
+  - Write the byte address for the access to [`DIRECT_ACCESS_ADDRESS`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_address).
     Note that the address is aligned with the granule, meaning that either 2 or 3 LSBs of the address are ignored, depending on whether the access granule is 32 or 64bit.
-  - Trigger a read command by writing 0x1 to [`DIRECT_ACCESS_CMD`](../src/fuse_ctrl/doc/registers.md#direct_access_cmd).
-  - Poll the [`STATUS`](../src/fuse_ctrl/doc/registers.md#status) until the DAI state goes back to idle.
+  - Trigger a read command by writing 0x1 to [`DIRECT_ACCESS_CMD`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_cmd).
+  - Poll the [`STATUS`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#status) until the DAI state goes back to idle.
     Alternatively, the `otp_operation_done` interrupt can be enabled up to notify the processor once an access has completed.
   - If the status register flags a DAI error, additional handling is required.
-  - If the region accessed has a 32bit access granule, the 32bit chunk of read data can be read from [`DIRECT_ACCESS_RDATA_0`](../src/fuse_ctrl/doc/registers.md#direct_access_rdata).
-    If the region accessed has a 64bit access granule, the 64bit chunk of read data can be read from the [`DIRECT_ACCESS_RDATA_0`](../src/fuse_ctrl/doc/registers.md#direct_access_rdata) and [`DIRECT_ACCESS_RDATA_1`](../src/fuse_ctrl/doc/registers.md#direct_access_rdata) registers.
+  - If the region accessed has a 32bit access granule, the 32bit chunk of read data can be read from [`DIRECT_ACCESS_RDATA_0`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_rdata).
+    If the region accessed has a 64bit access granule, the 64bit chunk of read data can be read from the [`DIRECT_ACCESS_RDATA_0`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_rdata) and [`DIRECT_ACCESS_RDATA_1`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_rdata) registers.
   - Go back to the first step and repeat until all data has been read.
 
-The hardware will set [`DIRECT_ACCESS_REGWEN`](../src/fuse_ctrl/doc/registers.md#direct_access_regwen) to 0x0 while an operation is pending in order to temporarily lock write access to the CSRs registers.
+The hardware will set [`DIRECT_ACCESS_REGWEN`](../src/fuse_ctrl/doc/otp_ctrl_registers.md#direct_access_regwen) to 0x0 while an operation is pending in order to temporarily lock write access to the CSRs registers.
 
 ## Sequences: Reset, Boot
 
@@ -1138,7 +1207,7 @@ Internal    |output      |   1    | `hw_rev_o`            |                     
 Internal    |input       |   253  | `cptra_ss_mcu_ext_int` |                                     | Reflection of HW revision ID read from fuse controller              |
 
 
-## Memory Map / Address Map
+## Fuse Macro Memory Map / Fuse Controller CSR Address Map
 
 See [Life-cycle Controller Register Map](../src/lc_ctrl/rtl/lc_ctrl.rdl).
 
@@ -1155,6 +1224,8 @@ See [Life-cycle Controller Register Map](../src/lc_ctrl/rtl/lc_ctrl.rdl).
    - Verify that all output signals, including alerts, remain within the expected ranges under normal operation.
 2. **IMPORTANT SOC REQUIREMENT**:
     - Life cycle controller allows you to switch from internal to external clock on a request from SOC over JTAG or AXI (As explained in other sections, this is typically used for Fuse programming scenarios when a stable clock is not yet available within the SOC). When the request arrives, life cycle controller requests the SOC to do the clock switch. When such a request is made, SOC MUST respond with an acknowledgement within 2 clock cycles of the internal clock. If this condition is not met, OTP controller will assert "program error" and the SOC must go through a reset cycle and redo the above steps. This must be verified by the SOC as a part of Caliptra subsystem integration checks.
+
+    To protect from clock stretching attacks Caliptra mandates using a clock source that is constructed within the SOC (eg. PLL, Calibrated Ring Oscillator, etc). For such a clock source, a SOC may require fuses to be programmed. TP programming demands a reliable and deterministic clock signal to ensure correct fuse write operations; which SOC may not have during the early phases of manufacturing flow due to above constraints. In order to overcome this issue, this `external clock` can be used typically in the manufacturing phase of a SOC; and for such SOCs this external clock is supplied from a platform (e.g an ATE). Since the Caliptra subsystem includes only one clock input (`cptra_ss_clk_i`), the SoC integrator is responsible for ensuring that this input can be switched to a stable source.
 
 3. **Scan Path Exclusions**:
    - Ensure that the RAW\_UNLOCK token is excluded from the scan chain. This token is different from other LC transition tokens as it is stored in the plaintext in gates, not in hashed form.
@@ -1349,7 +1420,7 @@ If there is an issue within MCI whether it be the Boot Sequencer or another comp
 | Facing | Type | Width | Name | Clock | Description |
 | :---- | :---- | :---- | :---- | :---- | :---- |
 | External | Input | 1 | `clk` |  | MCI Clock. Connected to subsystem top level clk input.|
-| Internal | Output | 1 | `mcu_clk_cg` |  | MCU clock gated when MCU in reset for RDC. |
+| External | Output | 1 | `mcu_clk_cg` |  | MCU clock gated when MCU in reset for RDC. Exposed as `cptra_ss_mcu_clk_cg_o` externally.|
 | External | Output | 1 | `cptra_ss_rdc_clk_cg` |  | MCI SS clock gated when caliptra reset asserted for RDC. Should be used whenever their is a Warm reset ->  cold reset crossing in design. Must be paired with `cptra_ss_rst_b_o` reset for proper gating. Exposed to SOC as `cptra_ss_rdc_clk_cg_o`|
 
 **Table: MCI Resets**
@@ -1359,8 +1430,8 @@ If there is an issue within MCI whether it be the Boot Sequencer or another comp
 | External | Input  | 1     | `mci_pwrgood` |  Active high power good indicator. Deepest reset domain for MCI.             |
 | External | Input  | 1     | `mci_rst_b`   |  Active low asynchronous reset for MCI.                                      |
 | External | Input  | 1     | `cptra_ss_rst_b_o`   |  Active low asyn reset for Caliptra SS. Delayed version of `mci_rst_b` in order to gate `cptra_ss_rdc_clk_cg` and `mcu_clk_cg` before reset assertions for RDC purposes. When `scan_mode` is set, this is directly controlle  by `mci_rst_b`                                     |
-| Internal | Output | 1     | `mcu_rst_b`   | Reset for MCU. When `scan_mode` is set, this is directly controlled by `mci_rst_b`. |
-| Internal | Output | 1     | `cptra_rst_b` | Reset for Caliptra. When `scan_mode` is set, this is directly controlled by `mci_rst_b`. |
+| External | Output | 1     | `mcu_rst_b`   | Reset for MCU. When `scan_mode` is set, this is directly controlled by `mci_rst_b`. Exposed as `cptra_ss_mcu_rst_b_o` externally. |
+| External | Output | 1     | `cptra_rst_b` | Reset for Caliptra. When `scan_mode` is set, this is directly controlled by `mci_rst_b`. Exposed as `cptra_ss_mci_cptra_rst_b_o` externally.  |
 
 **Table: MCI AXI Interface**
 
@@ -1380,6 +1451,15 @@ If there is an issue within MCI whether it be the Boot Sequencer or another comp
 | External | Input  | `AXI_USER_WIDTH` | `strap_mci_soc_config_axi_user`       | AXI USER with MCU privilages in MCI reg. Use for Romless config. 0x0: Disable 0xFFFFFFFF: Debug (all AXI users get this privilage). Exposed to SOC via `cptra_ss_strap_mci_soc_config_axi_user_i`                                        |
 | External | Input  | 32             | `strap_mcu_reset_vector`  | Default reset vector for MCI. Can be overridden via MCI register write. Exposed to SOC via `cptra_ss_strap_mcu_reset_vector_i`|
 | External | Input  | 32             | `ss_debug_intent`  | Debug intent |
+
+
+**Table: MCI CG Controls**
+| Facing   | Type   | Width          | Name                      | Description                                                   |
+|:-------- |:------ |:-------------- |:------------------------- | :------------------------------------------------------------- |
+| External | output    | 1     | `rdc_clk_dis`         | Clock disable for warm reset. Used to disable `cptra_ss_rdc_clk_cg_o` and `cptra_ss_mcu_clk_cg_o` clocks. Asserted a few clock cycles after `cptra_ss_rst_b_i` asserted and before `cptra_ss_rst_b_o` asserted. Deasserted a few clock cycles after `cptra_ss_rst_b_i` deasserted. Exposed as `cptra_ss_warm_reset_rdc_clk_dis_o` externally.   |
+| External | output    | 1     | `early_warm_reset_warn`         | Early reset warn used to change security related signals to a safe value before reset is asserted. Needed since Caliptra Core clock gating is slightly after MCI clock gating/reset assertion. Example is the security_state fed from MCI to Caliptra Core. Exposed as `cptra_ss_early_warm_reset_warn_o` externally |
+| External | output    | 1     | `fw_update_rdc_clk_dis`         | Clock disable for MCU reset. Used to disable `cptra_ss_mcu_clk_cg_o` clock. Asserted a few clock cycles before `cptra_ss_mcu_rst_b_o` is asserted. Deasserted when MCI boot sequencer switches out of `BOOT_RST_MCU` state. Exposed as `cptra_ss_mcu_fw_update_rdc_clk_dis_o` externally |
+
 
 
 **Table: MCI MISC Interface**
@@ -1576,7 +1656,8 @@ The two regions have different access protection. The size of the regions is dyn
 
     | Bits | Name | Description |
     | :---- | :---- | :---- |
-    | 63:0 | RESERVED | No allocated function |
+    | 63:1 | RESERVED | No allocated function |
+    | 0 | FIPS_ZEROIZATION_PPD_i | [FIPS zeroization](CaliptraSSHardwareSpecification.md#zeroization-flow-for-secret-fuses) request sampled by MCU ROM. If FIPS zeroization is required, this signal shall be set before Caliptra SS is out of reset. If set, MCU ROM will set MASK register triggering FIPS zeroization flow. If this signal is toggled at runtime it shall be ignored. |
 
 ### Error Aggregation Connectivity Requirements
 
@@ -1656,10 +1737,10 @@ Below are the connections needed between MCI and LCC for the Gasket functionalit
 
 | MCI Port | Direction | LCC Port | Description |
 | ----- | :---: | ----- | ----- |
-| from\_lcc\_to\_otp\_program\_i | \<- | lc\_otp\_program\_o | See [LCC Section](LC-Controller) |
-| lc\_dft\_en\_i | \<- | lc\_dft\_en\_o | See [LCC Section](LC-Controller)|
-| lc\_hw\_debug\_en\_i | \<- | lc\_hw\_debug\_en\_o | See [LCC Section](LC-Controller)|
-| from\_otp\_to\_lcc\_program\_i | \<- | otp\_lc\_data\_i | See [LCC Section](LC-Controller) |
+| from\_lcc\_to\_otp\_program\_i | \<- | lc\_otp\_program\_o | See [LCC Section](#Life-Cycle-Controller) |
+| lc\_dft\_en\_i | \<- | lc\_dft\_en\_o | See [LCC Section](#Life-Cycle-Controller)|
+| lc\_hw\_debug\_en\_i | \<- | lc\_hw\_debug\_en\_o | See [LCC Section](#Life-Cycle-Controller)|
+| from\_otp\_to\_lcc\_program\_i | \<- | otp\_lc\_data\_i | See [LCC Section](#Life-Cycle-Controller) |
 
 **Table: LCC Gasket - MCI to Caliptra Core Connections**
 
@@ -1922,7 +2003,7 @@ The expected boot sequence is:
 2. MCI boot FSM progresses to `WAIT_FOR_CPTRA_BOOT_GO`
 3. Trusted SOC agent does configuration MCU ROM typically executes. See [CSS HW spec](https://github.com/chipsalliance/caliptra-ss/blob/main/docs/CaliptraSSHardwareSpecification.md#subsystem-boot-finite-state-machine-css-bootfsm)
 4. Trusted SOC agent sets `CPTRA_BOOT_GO.go` bringing Caliptra out of reset
-5. Trusted SOC agent executes [MCU FW Boot Update](mcu-fw-boot-update) with Caliptra
+5. Trusted SOC agent executes [MCU FW Boot Update](#mcu-fw-boot-update) with Caliptra
   - When SOC agent sees `notif_cptra_mcu_reset_req_sts` set by Caliptra, SOC will see `cptra_ss_mcu_halt_req_o` asserted by MCI Boot FSM. SOC must assert `cptra_ss_mcu_halt_status_i` and `cptra_ss_mcu_halt_ack_i` back to MCI. When SOC sees `cptra_ss_mcu_halt_req_o` deassert SOC shall give full control of these signals back to MCU.
   - See [MCU Halt Ack Interface](#mcu-halt-ack-interface) for recommended connections.
 
@@ -2081,7 +2162,7 @@ The I3C core in the Caliptra Subsystem is an I3C target composed of two separate
 2. **Recovery target** : Recovery target is dedicated to streaming boot / recovery interface.
 
 - This I3C code integrates with an AXI interconnect, allowing AXI read and write transactions to access I3C registers. For details on the core’s internal registers and functionality, see:
-  - [I3C Core Documentation](https://github.com/chipsalliance/i3c-core/blob/main/docs/source/top.md)
+  - [I3C Core Documentation](https://chipsalliance.github.io/i3c-core/)
   - [Caliptra Subsystem Hardware Specification Document](CaliptraSSHardwareSpecification.md)
   - [I3C Core Registers](https://github.com/chipsalliance/i3c-core/tree/main/src/rdl)
 
@@ -2152,8 +2233,8 @@ The I3C core in the Caliptra Subsystem is an I3C target composed of two separate
 | `sel_od_pp_o`                     | output    | 1 bit                     | Open-drain / push-pull selection (digital output)                    |
 | `i3c_scl_io`                      | inout     | 1 bit (else)              | I3C clock line (analog/digital)                                      |
 | `i3c_sda_io`                      | inout     | 1 bit (else)              | I3C data line (analog/digital)                                       |
-| `recovery_payload_available_o`    | output    | 1 bit                     | Indicates recovery payload is available                              |
-| `recovery_image_activated_o`      | output    | 1 bit                     | Indicates the recovery image is activated                            |
+| `recovery_payload_available_o`    | output    | 1 bit                     | Indicates recovery payload is available and used by Caliptra Core. Exposed as `cptra_ss_i3c_recovery_payload_available_o` to SOC |
+| `recovery_image_activated_o`      | output    | 1 bit                     | Indicates the recovery image is activated and used by Caliptra Core. Exposed as `cptra_ss_i3c_recovery_image_activated_o` to SOC | 
 | `peripheral_reset_o`              | output    | 1 bit                     | Resets connected peripherals                                         |
 | `peripheral_reset_done_i`         | input     | 1 bit                     | Acknowledges peripheral reset completion                             |
 | `escalated_reset_o`               | output    | 1 bit                     | Escalated reset output                                               |
@@ -2167,6 +2248,8 @@ The I3C core in the Caliptra Subsystem is an I3C target composed of two separate
   1. Connect the `cptra_ss_i3c_s_axi_if` with AXI interconnect.
   2. Follow the programming sequence described in [Programming Sequence from AXI Side](#programming-sequence-from-axi-side) **Point#1** to initialize the I3C targets.
   3. Follow the programming sequence described in [Programming Sequence from AXI Side](#programming-sequence-from-axi-side) **Point#2** to set both I3C target device with static addresses. **Note**, this is not required if I3C Host device is using the CCC `ENTDAA` for initializing the dynamic address to both targets.
+  4. If no external I3C connect `cptra_ss_i3c_recovery_image_activated_o` directly to `cptra_ss_i3c_recovery_image_activated_i`. If there is an external I3C `cptra_ss_i3c_recovery_image_activated_o` can be combined with or completely replaced with SOC logic and connected to `cptra_ss_i3c_recovery_image_activated_i`.
+  5. If no external I3C connect `cptra_ss_i3c_recovery_payload_available_o` directly to `cptra_ss_i3c_recovery_payload_available_i`. If there is an external I3C `cptra_ss_i3c_recovery_payload_available_o` can be combined with or completely replaced with SOC logic and connected to `cptra_ss_i3c_recovery_payload_available_i`.
 
 ## Programming Sequence
 
@@ -2253,7 +2336,7 @@ In an unconstrained environment, several CDC violations are anticipated. CDC ana
  Will not affect complete solution.
   - Suppressible error in [Line 235](https://github.com/chipsalliance/caliptra-rtl/blob/ea416cbe89805221a0cdb92a34a2cfefb795fbec/src/entropy_src/rtl/entropy_src.sv#L235) of entropy_src.sv
     - Occurs in stub code. Comment out to proceed
-  - Function definition in [Line 45](https://github.com/chipsalliance/caliptra-rtl/blob/ea416cbe89805221a0cdb92a34a2cfefb795fbec/src/caliptra_prim/rtl/caliptra_prim_sparse_fsm_flop.sv#L45) of caliptra_prim_sparse_fsm_flop.sv may cause CDC tool to quit compilation 
+  - Function definition in [Line 45](https://github.com/chipsalliance/caliptra-rtl/blob/ea416cbe89805221a0cdb92a34a2cfefb795fbec/src/caliptra_prim/rtl/caliptra_prim_sparse_fsm_flop.sv#L45) of caliptra_prim_sparse_fsm_flop.sv may cause CDC tool to quit compilation
     - CALIPTRA_INC_ASSERT not defined by default
     - Comment out code under if condition for CDC analysis
 

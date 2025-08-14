@@ -21,7 +21,6 @@
 #include "printf.h"
 #include "riscv_hw_if.h"
 #include "soc_ifc.h"
-#include "fuse_ctrl_address_map.h"
 #include "caliptra_ss_lc_ctrl_address_map.h"
 #include "caliptra_ss_lib.h"
 #include "fuse_ctrl.h"
@@ -71,6 +70,11 @@ void main (void) {
 
         VPRINTF(LOW, "INFO: current lcc state: %d\n", lc_state_curr);
         VPRINTF(LOW, "INFO: current lc cntc state: %d\n", lc_cnt_curr);
+
+        if (lc_cnt_curr == 24) {
+            VPRINTF(LOW, "INFO: reached max. LC counter value, finish test test\n");
+            goto epilogue;
+        }
 
         uint32_t count = 0;
         memset(buf, 0, sizeof(buf));
