@@ -18,6 +18,7 @@
 module mcu_top
     import css_mcu0_el2_pkg::*;
 #(
+   parameter MCU_IDCODE_VALUE = 32'h0000_0000,
     `include "css_mcu0_el2_param.vh"
 ) (
     input logic        clk,
@@ -412,7 +413,7 @@ module mcu_top
   assign mem_export_icache.ic_tag_data_raw_packed_pre = ic_tag_data_raw_packed_pre;
   assign mem_export_icache.ic_tag_data_raw_pre        = ic_tag_data_raw_pre;
 
-  css_mcu0_el2_veer_wrapper rvtop (
+  css_mcu0_el2_veer_wrapper #(.MCU_IDCODE_VALUE(MCU_IDCODE_VALUE)) rvtop (
       .el2_mem_export(mem_export.veer_sram_src),
       .el2_icache_export(mem_export_icache.veer_icache_src),
       .dmi_core_enable(dmi_core_enable),
